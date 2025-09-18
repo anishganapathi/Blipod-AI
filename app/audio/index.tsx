@@ -18,7 +18,7 @@ export default function AudioPage() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Now Playing Section */}
         <View style={styles.nowPlaying}>
           <Icon name="Headphones" size={60} color="#fff" />
@@ -76,7 +76,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#000',
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   nowPlaying: {
     alignItems: "center",

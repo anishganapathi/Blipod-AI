@@ -23,7 +23,7 @@ const MoreIcon = () => (
 const Homepage = () => {
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}>
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    backgroundColor: '#000',
   },
   scrollView: {
     flex: 1,

@@ -15,7 +15,7 @@ const CATEGORIES = [
 export default function BrowsePage() {
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ThemedText style={styles.header}>🔖 Browse</ThemedText>
 
         <FlatList
@@ -45,7 +45,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#000',
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   header: {
     fontSize: 22,

@@ -29,14 +29,14 @@ export default function GlassNavBar() {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
       {/* Active screen with shared axis transition */}
       <View style={styles.screenContainer}>
         <Animated.View
           key={activeTab} // triggers animation on tab change
           entering={FadeInRight.duration(250)}
           exiting={FadeOutLeft.duration(250)}
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          style={{ flex: 1 }}
         >
           {NAV_ITEMS[activeTab].screen}
         </Animated.View>
@@ -83,8 +83,7 @@ export default function GlassNavBar() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#000',
   },
   container: {
     position: "absolute",
