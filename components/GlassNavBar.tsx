@@ -10,6 +10,13 @@ import Animated, {
   FadeOut,
   SlideInUp,
   SlideOutDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  withSequence,
+  Easing,
 } from "react-native-reanimated";
 import ProfilePage from "@/app/account";
 import HomePage from "@/app/home";
@@ -31,10 +38,77 @@ const NAV_ITEMS: NavItem[] = [
 
 const { width, height } = Dimensions.get('window');
 
-export default function GlassNavBar() {
+export default function GlassNavBar(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(0);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [linkInput, setLinkInput] = useState('');
+
+  // FAB animation values
+  const fabScale = useSharedValue(1);
+  const fabOpacity = useSharedValue(1);
+  const fabRotation = useSharedValue(0);
+  const overlayOpacity = useSharedValue(0);
+
+  const handleFABPress = (): void => {
+    // iOS-style haptic feedback simulation through animation
+    fabScale.value = withSequence(
+      withSpring(0.85, { 
+        damping: 20,
+        stiffness: 400,
+        mass: 0.5 
+      }),
+      withSpring(1.05, { 
+        damping: 15,
+        stiffness: 300,
+        mass: 0.7 
+      }),
+      withSpring(1, { 
+        damping: 20,
+        stiffness: 400 
+      })
+    );
+
+    // Subtle rotation for premium feel
+    fabRotation.value = withSequence(
+      withTiming(15, { duration: 150 }),
+      withTiming(0, { duration: 200 })
+    );
+
+    // Reveal overlay with smooth timing
+    overlayOpacity.value = withTiming(1, { duration: 300 });
+    
+    // Show modal after animation starts
+    setTimeout(() => {
+      setIsDialogVisible(true);
+    }, 100);
+  };
+
+  const handleDialogClose = (): void => {
+    // Smooth hide animation
+    overlayOpacity.value = withTiming(0, { duration: 200 });
+    setIsDialogVisible(false);
+    setLinkInput('');
+  };
+
+  // Animated styles for FAB
+  const fabAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: fabScale.value },
+        { rotate: `${fabRotation.value}deg` }
+      ],
+      opacity: fabOpacity.value,
+    };
+  });
+
+  // Animated overlay style for reveal effect
+  const overlayAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(overlayOpacity.value, [0, 1], [0.3, 1]);
+    return {
+      opacity: overlayOpacity.value,
+      transform: [{ scale }],
+    };
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -53,19 +127,29 @@ export default function GlassNavBar() {
         </Animated.View>
       </View>
 
-      {/* Floating Action Button (glass) */}
+      {/* Floating Action Button (glass) with enhanced animation */}
       <View style={styles.fabWrapper} pointerEvents="box-none">
-        <BlurView intensity={50} tint="dark" style={styles.fabGlass}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Add"
-            activeOpacity={0.8}
-            style={styles.fabButton}
-            onPress={() => setIsDialogVisible(true)}
-          >
-            <Icon name="Plus" size={22} color="#fff" />
-          </TouchableOpacity>
-        </BlurView>
+        <Animated.View style={fabAnimatedStyle}>
+          <BlurView intensity={50} tint="dark" style={styles.fabGlass}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Add"
+              activeOpacity={0.9}
+              style={styles.fabButton}
+              onPress={handleFABPress}
+            >
+              <Icon name="Plus" size={22} color="#fff" />
+            </TouchableOpacity>
+          </BlurView>
+        </Animated.View>
+
+        {/* Ripple effect overlay */}
+        <Animated.View 
+          style={[styles.fabRipple, overlayAnimatedStyle]}
+          pointerEvents="none"
+        >
+          <BlurView intensity={30} tint="light" style={styles.rippleBlur} />
+        </Animated.View>
       </View>
 
       {/* Glass bottom nav */}
@@ -103,48 +187,52 @@ export default function GlassNavBar() {
         </BlurView>
       </View>
 
-      {/* Liquid Glass Dialog */}
+      {/* Enhanced Liquid Glass Dialog with iOS-style reveal */}
       <Modal
         visible={isDialogVisible}
         transparent
         animationType="none"
-        onRequestClose={() => setIsDialogVisible(false)}
+        onRequestClose={handleDialogClose}
       >
         <Animated.View
-          entering={FadeIn.duration(300)}
-          exiting={FadeOut.duration(200)}
+          entering={FadeIn.duration(400)}
+          exiting={FadeOut.duration(250)}
           style={styles.modalOverlay}
         >
           <TouchableOpacity
             style={styles.modalBackdrop}
             activeOpacity={1}
-            onPress={() => setIsDialogVisible(false)}
+            onPress={handleDialogClose}
           >
-            <Animated.View
-              entering={SlideInUp.springify().damping(20).stiffness(300)}
-              exiting={SlideOutDown.duration(200)}
-              style={styles.dialogContainer}
-            >
+              <Animated.View
+                entering={SlideInUp.springify().damping(25).stiffness(350).mass(0.8)}
+                exiting={SlideOutDown.springify().damping(30).stiffness(400)}
+                style={styles.dialogContainer}
+              >
               <BlurView
-                intensity={100}
+                intensity={120}
                 tint="dark"
                 style={styles.dialogBlur}
               >
                 <View style={styles.dialogContent}>
-                  <View style={styles.dialogHeader}>
+                    <Animated.View 
+                      entering={FadeIn.delay(200).duration(400)}
+                      style={styles.dialogHeader}
+                    >
                     <ThemedText style={styles.dialogTitle}>Add Link</ThemedText>
                     <TouchableOpacity
                       style={styles.closeButton}
-                      onPress={() => {
-                        setIsDialogVisible(false);
-                        setLinkInput('');
-                      }}
+                      onPress={handleDialogClose}
+                      activeOpacity={0.7}
                     >
                       <Icon name="X" size={20} color="rgba(255, 255, 255, 0.8)" />
                     </TouchableOpacity>
-                  </View>
+                  </Animated.View>
                   
-                  <View style={styles.dialogBody}>
+                  <Animated.View 
+                    entering={FadeIn.delay(300).duration(500)}
+                    style={styles.dialogBody}
+                  >
                     <ThemedText style={styles.dialogSubtitle}>
                       Enter a article or podcast link
                     </ThemedText>
@@ -164,15 +252,13 @@ export default function GlassNavBar() {
                     </View>
                     
                     <Animated.View 
-                      entering={FadeIn.delay(200).duration(300)}
+                      entering={FadeIn.delay(500).duration(400)}
                       style={styles.buttonContainer}
                     >
                       <TouchableOpacity 
                         style={[styles.actionButton, styles.cancelButton]}
-                        onPress={() => {
-                          setIsDialogVisible(false);
-                          setLinkInput('');
-                        }}
+                        onPress={handleDialogClose}
+                        activeOpacity={0.8}
                       >
                         <BlurView intensity={20} tint="dark" style={styles.buttonBlur}>
                           <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
@@ -185,17 +271,17 @@ export default function GlassNavBar() {
                           if (linkInput.trim()) {
                             // TODO: Handle adding the link
                             console.log('Adding link:', linkInput);
-                            setIsDialogVisible(false);
-                            setLinkInput('');
+                            handleDialogClose();
                           }
                         }}
+                        activeOpacity={0.8}
                       >
                         <BlurView intensity={30} tint="dark" style={styles.buttonBlur}>
                           <ThemedText style={styles.addButtonText}>Add</ThemedText>
                         </BlurView>
                       </TouchableOpacity>
                     </Animated.View>
-                  </View>
+                  </Animated.View>
                 </View>
               </BlurView>
             </Animated.View>
@@ -222,6 +308,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(28, 28, 30, 0.85)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   fabButton: {
     width: 56,
@@ -229,6 +320,21 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  fabRipple: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    top: -12,
+    left: -12,
+    right: -12,
+    bottom: -12,
+  },
+  rippleBlur: {
+    flex: 1,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 165, 0, 0.1)',
   },
   container: {
     position: "absolute",
@@ -284,7 +390,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalBackdrop: {
@@ -296,84 +402,97 @@ const styles = StyleSheet.create({
     marginBottom: Platform.OS === 'ios' ? 100 : 80,
   },
   dialogBlur: {
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: 'rgba(28, 28, 30, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(28, 28, 30, 0.9)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
+    elevation: 20,
   },
   dialogContent: {
-    padding: 24,
+    padding: 28,
   },
   dialogHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   dialogTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
     color: '#fff',
+    letterSpacing: -0.5,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   dialogBody: {
     alignItems: 'center',
   },
   dialogSubtitle: {
-    fontSize: 16,
+    fontSize: 17,
     color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
+    lineHeight: 24,
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     fontSize: 16,
     color: '#fff',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    minHeight: 52,
   },
   buttonContainer: {
     flexDirection: 'row',
     width: '100%',
-    gap: 12,
+    gap: 14,
   },
   actionButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
+    minHeight: 52,
   },
   cancelButton: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   addButton: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 165, 0, 0.3)',
+    borderColor: 'rgba(255, 165, 0, 0.4)',
+    backgroundColor: 'rgba(255, 165, 0, 0.05)',
   },
   buttonBlur: {
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 52,
   },
   cancelButtonText: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontWeight: '500',
   },
   addButtonText: {
@@ -382,4 +501,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
