@@ -121,7 +121,11 @@ const Homepage = () => {
             <View style={styles.headerLeft}>
               <View style={styles.profileContainer}>
                 <View style={styles.profileImage}>
-                  <MaterialIcons name="person" size={24} color="#fff" />
+                  <Image
+                    source={require('../../assets/images/Alogo.png')}
+                    style={styles.profileLogo}
+                    resizeMode="cover"
+                  />
                 </View>
                 <View style={styles.profileText}>
                   <Text style={styles.welcomeText}>Welcome Anish!</Text>
@@ -253,6 +257,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    overflow: 'hidden',
+  },
+  profileLogo: {
+    width: '100%',
+    height: '100%',
   },
   profileText: {
     flex: 1,
