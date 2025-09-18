@@ -234,7 +234,7 @@ export default function GlassNavBar(): React.JSX.Element {
                     style={styles.dialogBody}
                   >
                     <ThemedText style={styles.dialogSubtitle}>
-                      Enter a article or podcast link
+                      Enter an article or podcast link
                     </ThemedText>
                     
                     <View style={styles.inputContainer}>

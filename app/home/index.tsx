@@ -80,8 +80,16 @@ const Homepage = () => {
       title: 'San Francisco Evenings',
       subtitle: 'travel.org',
       date: 'Tuesday 16 Sep, 2025',
-      duration: '15 min',
+      duration: '14 min',
       thumbnail: 'https://plus.unsplash.com/premium_photo-1673266630624-4cbef6d25ff4?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    },
+    {
+      id: '4',
+      title: 'The Amazon Rainforest',
+      subtitle: 'natgeo.org',
+      date: 'Tuesday 15 Sep, 2025',
+      duration: '12 min',
+      thumbnail: 'https://images.unsplash.com/photo-1591081658714-f576fb7ea3ed?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
   ];
 

@@ -145,21 +145,15 @@ export default function BrowsePage(): React.JSX.Element {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Animated header */}
-        <Animated.View 
-          entering={FadeInDown.duration(600).springify().damping(20)}
-          style={styles.headerContainer}
-        >
+        <View style={styles.headerContainer}>
           <ThemedText style={styles.header}>Browse</ThemedText>
           <ThemedText style={styles.subtitle}>
             Discover content across categories
           </ThemedText>
-        </Animated.View>
+        </View>
 
         {/* Search bar */}
-        <Animated.View 
-          entering={FadeInRight.delay(200).duration(500).springify()}
-          style={styles.searchContainer}
-        >
+        <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
             <BlurView intensity={30} tint="dark" style={styles.searchBlur}>
               <View style={styles.searchContent}>
@@ -177,7 +171,7 @@ export default function BrowsePage(): React.JSX.Element {
               </View>
             </BlurView>
           </View>
-        </Animated.View>
+        </View>
 
         {/* Categories grid */}
         <FlatList
@@ -218,25 +212,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
   },
   headerContainer: {
-    marginBottom: 24,
+    marginBottom: 32,
+    paddingTop: 12,
   },
   header: {
     fontSize: 28,
     fontWeight: "800",
     color: "#fff",
-    marginBottom: 6,
+    marginBottom: 12,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.6)",
     fontWeight: "500",
+    lineHeight: 22,
   },
   searchContainer: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   searchWrapper: {
     borderRadius: 16,
