@@ -42,6 +42,21 @@ export default function GlassNavBar() {
         </Animated.View>
       </View>
 
+      {/* Floating Action Button (glass) */}
+      <View style={styles.fabWrapper} pointerEvents="box-none">
+        <BlurView intensity={50} tint="dark" style={styles.fabGlass}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+            activeOpacity={0.8}
+            style={styles.fabButton}
+            onPress={() => { /* TODO: hook action */ }}
+          >
+            <Icon name="Plus" size={22} color="#fff" />
+          </TouchableOpacity>
+        </BlurView>
+      </View>
+
       {/* Glass bottom nav */}
       <View style={styles.container}>
         <BlurView style={styles.blurContainer} intensity={50} tint="dark">
@@ -84,6 +99,25 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  fabWrapper: {
+    position: 'absolute',
+    right: 28,
+    bottom: Platform.OS === 'ios' ? 110 : 95, // slightly above nav bar
+  },
+  fabGlass: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(28, 28, 30, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  fabButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   container: {
     position: "absolute",

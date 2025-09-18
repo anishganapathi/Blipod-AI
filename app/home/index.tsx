@@ -145,7 +145,7 @@ const Homepage = () => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.categoryText}>Trending</Text>
+                  <Text style={styles.categoryText}>New</Text>
                 </LinearGradient>
               </TouchableOpacity>
               
@@ -156,7 +156,7 @@ const Homepage = () => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.categoryText}>Bingeworthy</Text>
+                  <Text style={styles.categoryText}>Saved</Text>
                 </LinearGradient>
               </TouchableOpacity>
               
@@ -167,7 +167,7 @@ const Homepage = () => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.categoryText}>Award</Text>
+                  <Text style={styles.categoryText}>Categories</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -195,7 +195,7 @@ const Homepage = () => {
           {/* Top Episodes Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Top Episodes</Text>
+              <Text style={styles.sectionTitle}>Saved Episodes</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
