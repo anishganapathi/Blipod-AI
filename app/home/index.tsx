@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { usePlayer } from '@/context/PlayerContext';
 
 interface PodcastCard {
   id: string;
@@ -29,62 +30,75 @@ interface Episode {
 }
 
 const Homepage = () => {
+  const { open } = usePlayer();
   const podcasts: PodcastCard[] = [
     {
       id: '1',
-      title: 'Dare We Say',
-      publisher: 'truth.media',
-      image: 'https://picsum.photos/200/200?1',
+      title: 'Sports',
+      publisher: 'sports.bbc.com',
+      image: 'https://plus.unsplash.com/premium_photo-1664537975122-9c598d85816e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: '2',
-      title: 'Missed Fortune',
-      publisher: 'audiocheck',
-      image: 'https://picsum.photos/200/200?2',
+      title: 'Nature',
+      publisher: 'natgeo.org',
+      image: 'https://plus.unsplash.com/premium_photo-1675827055694-010aef2cf08f?q=80&w=824&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: '3',
       title: 'Tech Talk',
-      publisher: 'techcast',
-      image: 'https://picsum.photos/200/200?3',
+      publisher: 'tech.crunch.com',
+      image: 'http://images.unsplash.com/photo-1488590528505-98d2b5aba04b?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: '4',
-      title: 'Story Time',
-      publisher: 'narratives',
-      image: 'https://picsum.photos/200/200?4',
+      title: 'Travel',
+      publisher: 'travel.org',
+      image: 'https://images.unsplash.com/photo-1500835556837-99ac94a94552?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
   ];
 
   const episodes: Episode[] = [
     {
       id: '1',
-      title: 'The Drug Runner I',
-      subtitle: 'Chapter 1',
-      date: 'Monday 11 Aug, 2022',
+      title: 'Cricket T20 World Cup',
+      subtitle: 'sports.bbc.com',
+      date: 'Thursday 18 Sep, 2025',
       duration: '20 min',
-      thumbnail: 'https://picsum.photos/150/150?5',
+      thumbnail: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=2010&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: '2',
-      title: 'Breaking News',
-      subtitle: 'Episode 15',
-      date: 'Tuesday 12 Aug, 2022',
+      title: 'Meta AR Glasses',
+      subtitle: 'tech.crunch.com',
+      date: 'Wednesday 17 Sep, 2025',
       duration: '25 min',
-      thumbnail: 'https://picsum.photos/150/150?6',
+      thumbnail: 'https://images.unsplash.com/photo-1665799871677-f1fd17338b43?q=80&w=1628&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: '3',
-      title: 'Morning Brief',
-      subtitle: 'Daily Update',
-      date: 'Wednesday 13 Aug, 2022',
+      title: 'San Francisco Evenings',
+      subtitle: 'travel.org',
+      date: 'Tuesday 16 Sep, 2025',
       duration: '15 min',
-      thumbnail: 'https://picsum.photos/150/150?7',
+      thumbnail: 'https://plus.unsplash.com/premium_photo-1673266630624-4cbef6d25ff4?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
   ];
 
   const PodcastCard = ({ item }: { item: PodcastCard }) => (
-    <TouchableOpacity style={styles.podcastCard} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.podcastCard}
+      activeOpacity={0.8}
+      onPress={() =>
+        open({
+          title: item.title,
+          subtitle: item.publisher,
+          image: item.image,
+          publisher: item.publisher,
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        })
+      }
+    >
       <Image source={{ uri: item.image }} style={styles.podcastImage} />
       <View style={styles.podcastOverlay}>
         <Text style={styles.podcastTitle}>{item.title}</Text>
@@ -140,7 +154,7 @@ const Homepage = () => {
 
           {/* New Podcasts Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>New Podcasts</Text>
+            <Text style={styles.sectionTitle}>Podcasts</Text>
             <View style={styles.categoryButtons}>
               <TouchableOpacity style={styles.categoryButton}>
                 <LinearGradient
@@ -180,7 +194,7 @@ const Homepage = () => {
           {/* New & Noteworthy Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>New & Noteworthy</Text>
+              <Text style={styles.sectionTitle}>Categories</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
@@ -199,7 +213,7 @@ const Homepage = () => {
           {/* Top Episodes Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Saved Episodes</Text>
+              <Text style={styles.sectionTitle}>Saved</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>

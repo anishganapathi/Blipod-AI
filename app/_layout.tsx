@@ -5,6 +5,8 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { View } from 'react-native';
+import { PlayerProvider } from '@/context/PlayerContext';
+import PlayerOverlay from '@/components/PlayerOverlay';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -14,10 +16,13 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         {/* This ensures background is black and fills screen */}
         <View style={{ flex: 1, backgroundColor: '#000' }}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
+          <PlayerProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+            <PlayerOverlay />
+          </PlayerProvider>
           <StatusBar style="light" />
         </View>
       </ThemeProvider>

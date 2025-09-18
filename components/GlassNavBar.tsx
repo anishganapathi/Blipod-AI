@@ -15,14 +15,14 @@ import BrowsePage from "@/app/browse";
 interface NavItem {
   icon: string;
   label: string;
-  screen: React.ReactNode; // each tab is a component
+  screen: React.ComponentType; // component reference, not invoked here
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: "Inbox", label: "Inbox", screen: HomePage() },
-  { icon: "Headphones", label: "Audio", screen: AudioPage() },
-  { icon: "Bookmark", label: "Browse", screen: BrowsePage() },
-  { icon: "User", label: "You", screen: ProfilePage() },
+  { icon: "Inbox", label: "Inbox", screen: HomePage },
+  { icon: "Headphones", label: "Audio", screen: AudioPage },
+  { icon: "ChartBarBig", label: "Browse", screen: BrowsePage },
+  { icon: "User", label: "You", screen: ProfilePage },
 ];
 
 export default function GlassNavBar() {
@@ -38,7 +38,10 @@ export default function GlassNavBar() {
           exiting={FadeOutLeft.duration(250)}
           style={{ flex: 1 }}
         >
-          {NAV_ITEMS[activeTab].screen}
+          {(() => {
+            const ActiveScreen = NAV_ITEMS[activeTab].screen;
+            return <ActiveScreen />;
+          })()}
         </Animated.View>
       </View>
 
