@@ -157,7 +157,7 @@ const Homepage = () => {
           {/* New & Noteworthy Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Categories</Text>
+              <Text style={styles.sectionTitle}>For you</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: 5,
   },
   seeAllText: {
     fontSize: 14,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   episodesList: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
-    padding: 16,
+    padding: 8,
   },
   episodeItem: {
     flexDirection: 'row',
