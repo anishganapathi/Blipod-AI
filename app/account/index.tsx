@@ -95,9 +95,9 @@ export default function ProfilePage() {
       <BlurView style={styles.streakBlur} intensity={30} tint="dark">
         <ThemedView style={styles.streakContent}>
           <View style={styles.streakHeader}>
-            <MaterialIcons name="local-fire-department" size={16} color="#FFA500" />
+            <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
             <ThemedText style={styles.streakText}>0 day streak</ThemedText>
-            <MaterialIcons name="local-fire-department" size={16} color="#FFA500" />
+            <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
           </View>
           
           <View style={styles.daysContainer}>
@@ -109,7 +109,7 @@ export default function ProfilePage() {
                   index === 3 && styles.activeDayCircle
                 ]}>
                   {index === 3 && (
-                    <MaterialIcons name="local-fire-department" size={12} color="#FFA500" />
+                    <ThemedText style={styles.dayEmoji}>🔥</ThemedText>
                   )}
                 </View>
               </View>
@@ -295,6 +295,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginHorizontal: 12,
   },
+  streakEmoji: {
+    fontSize: 20,
+  },
   daysContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -321,13 +324,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeDayCircle: {
-    backgroundColor: '#FFA500',
-    borderColor: '#FFA500',
-    shadowColor: '#FFA500',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  dayEmoji: {
+    fontSize: 16,
   },
   archiveContainer: {
     width: width - 40,
