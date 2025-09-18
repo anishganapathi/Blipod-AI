@@ -152,44 +152,7 @@ const Homepage = () => {
             </TouchableOpacity>
           </View>
 
-          {/* New Podcasts Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Podcasts</Text>
-            <View style={styles.categoryButtons}>
-              <TouchableOpacity style={styles.categoryButton}>
-                <LinearGradient
-                  colors={['#FF8C00', '#FFA500']}
-                  style={styles.categoryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.categoryText}>New</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.categoryButton}>
-                <LinearGradient
-                  colors={['#FFA500', '#FF7F00']}
-                  style={styles.categoryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.categoryText}>Saved</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.categoryButton}>
-                <LinearGradient
-                  colors={['#FF7F00', '#FF8C00']}
-                  style={styles.categoryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.categoryText}>Categories</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
+          
 
           {/* New & Noteworthy Section */}
           <View style={styles.section}>
