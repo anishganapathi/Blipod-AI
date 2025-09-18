@@ -1,5 +1,5 @@
-import React from "react";
-import { View, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
 import { BlurView } from "expo-blur";
@@ -124,6 +124,23 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ item, index }) => {
 };
 
 export default function BrowsePage(): React.JSX.Element {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredCategories, setFilteredCategories] = useState(CATEGORIES);
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    
+    if (text.trim() === "") {
+      setFilteredCategories(CATEGORIES);
+    } else {
+      const filtered = CATEGORIES.filter(category =>
+        category.title.toLowerCase().includes(text.toLowerCase()) ||
+        category.subtitle.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -143,28 +160,28 @@ export default function BrowsePage(): React.JSX.Element {
           entering={FadeInRight.delay(200).duration(500).springify()}
           style={styles.searchContainer}
         >
-          <TouchableOpacity 
-            style={styles.searchTouchable}
-            activeOpacity={0.7}
-            onPress={() => {
-              // Handle search press
-              console.log('Search pressed');
-            }}
-          >
+          <View style={styles.searchWrapper}>
             <BlurView intensity={30} tint="dark" style={styles.searchBlur}>
               <View style={styles.searchContent}>
                 <ThemedText style={styles.searchIcon}>🔍</ThemedText>
-                <ThemedText style={styles.searchPlaceholder}>
-                  Search categories...
-                </ThemedText>
+                <TextInput
+                  style={styles.searchInput}
+                  value={searchQuery}
+                  onChangeText={handleSearchChange}
+                  placeholder="Search categories..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                  returnKeyType="search"
+                  autoCorrect={false}
+                  clearButtonMode="while-editing"
+                />
               </View>
             </BlurView>
-          </TouchableOpacity>
+          </View>
         </Animated.View>
 
         {/* Categories grid */}
         <FlatList
-          data={CATEGORIES}
+          data={filteredCategories}
           numColumns={2}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
@@ -176,8 +193,16 @@ export default function BrowsePage(): React.JSX.Element {
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.gridContainer}
-          columnWrapperStyle={styles.row}
+          columnWrapperStyle={filteredCategories.length > 1 ? styles.row : undefined}
           ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <ThemedText style={styles.emptyText}>No categories found</ThemedText>
+              <ThemedText style={styles.emptySubtext}>
+                Try searching for something else
+              </ThemedText>
+            </View>
+          )}
         />
       </SafeAreaView>
     </View>
@@ -213,7 +238,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     marginBottom: 24,
   },
-  searchTouchable: {
+  searchWrapper: {
     borderRadius: 16,
   },
   searchBlur: {
@@ -234,11 +259,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginRight: 12,
   },
-  searchPlaceholder: {
+  searchInput: {
     flex: 1,
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#fff',
     fontWeight: '500',
+    paddingVertical: 0, // Reset default padding
   },
   gridContainer: {
     paddingTop: 8,
@@ -295,5 +321,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
   },
 });
