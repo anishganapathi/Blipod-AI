@@ -30,7 +30,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: "Inbox", label: "Inbox", screen: HomePage },
+  { icon: "Inbox", label: "Home", screen: HomePage },
   { icon: "Headphones", label: "Audio", screen: AudioPage },
   { icon: "ChartBarBig", label: "Browse", screen: BrowsePage },
   { icon: "User", label: "You", screen: ProfilePage },
@@ -152,9 +152,9 @@ export default function GlassNavBar(): React.JSX.Element {
         </Animated.View>
       </View>
 
-      {/* Glass bottom nav */}
+      {/* Glass bottom nav with enhanced glassy effect */}
       <View style={styles.container}>
-        <BlurView style={styles.blurContainer} intensity={50} tint="dark">
+        <BlurView style={styles.blurContainer} intensity={30} tint="dark">
           <View style={styles.content}>
             {NAV_ITEMS.map((item, index) => (
               <TouchableOpacity
@@ -356,15 +356,15 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(0, 0, 0, 0.15)",
   },
   blurContainer: {
     flex: 1,
-    backgroundColor: "rgba(28, 28, 30, 0.85)",
+    backgroundColor: "rgba(28, 28, 30, 0.4)",
     borderRadius: 35,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   content: {
     flex: 1,
