@@ -2,11 +2,9 @@ import React from "react";
 import { 
   View, 
   StyleSheet, 
-  FlatList, 
   TouchableOpacity, 
   Image, 
   ScrollView,
-  Dimensions 
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
@@ -18,6 +16,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface AlbumItem {
@@ -87,56 +86,57 @@ const POPULAR_SINGLES: SingleItem[] = [
   },
 ];
 
-export default function AudioPage(): JSX.Element {
-  const AlbumCard: React.FC<{ item: AlbumItem; index: number }> = ({ item }) => {
-    const scale = useSharedValue(1);
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
+// Define components inside the main component or outside
+const AlbumCard: React.FC<{ item: AlbumItem; index: number }> = ({ item }) => {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
-    return (
-      <AnimatedTouchableOpacity
-        style={[styles.albumCard, animatedStyle]}
-        activeOpacity={1}
-        onPressIn={() => (scale.value = withSpring(0.95))}
-        onPressOut={() => (scale.value = withSpring(1))}
-      >
-        <Image source={{ uri: item.image }} style={styles.albumImage} />
-        <View style={styles.albumInfo}>
-          <ThemedText style={styles.albumTitle}>{item.title}</ThemedText>
-          <ThemedText style={styles.albumYear}>{item.year}</ThemedText>
-        </View>
-      </AnimatedTouchableOpacity>
-    );
-  };
+  return (
+    <AnimatedTouchableOpacity
+      style={[styles.albumCard, animatedStyle]}
+      activeOpacity={1}
+      onPressIn={() => (scale.value = withSpring(0.95))}
+      onPressOut={() => (scale.value = withSpring(1))}
+    >
+      <Image source={{ uri: item.image }} style={styles.albumImage} />
+      <View style={styles.albumInfo}>
+        <ThemedText style={styles.albumTitle}>{item.title}</ThemedText>
+        <ThemedText style={styles.albumYear}>{item.year}</ThemedText>
+      </View>
+    </AnimatedTouchableOpacity>
+  );
+};
 
-  const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
-    const scale = useSharedValue(1);
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
+const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
-    return (
-      <AnimatedTouchableOpacity
-        style={[styles.singleItem, animatedStyle]}
-        activeOpacity={1}
-        onPressIn={() => (scale.value = withSpring(0.98))}
-        onPressOut={() => (scale.value = withSpring(1))}
-      >
-        <Image source={{ uri: item.image }} style={styles.singleImage} />
-        <View style={styles.singleContent}>
-          <ThemedText style={styles.singleTitle}>{item.title}</ThemedText>
-          <ThemedText style={styles.singleMeta}>
-            {item.year} • {item.status}
-          </ThemedText>
-        </View>
-        <TouchableOpacity style={styles.moreButton}>
-          <MaterialIcons name="more-vert" size={20} color="rgba(255,255,255,0.7)" />
-        </TouchableOpacity>
-      </AnimatedTouchableOpacity>
-    );
-  };
+  return (
+    <AnimatedTouchableOpacity
+      style={[styles.singleItem, animatedStyle]}
+      activeOpacity={1}
+      onPressIn={() => (scale.value = withSpring(0.98))}
+      onPressOut={() => (scale.value = withSpring(1))}
+    >
+      <Image source={{ uri: item.image }} style={styles.singleImage} />
+      <View style={styles.singleContent}>
+        <ThemedText style={styles.singleTitle}>{item.title}</ThemedText>
+        <ThemedText style={styles.singleMeta}>
+          {item.year} • {item.status}
+        </ThemedText>
+      </View>
+      <TouchableOpacity style={styles.moreButton}>
+        <MaterialIcons name="more-vert" size={20} color="rgba(255,255,255,0.7)" />
+      </TouchableOpacity>
+    </AnimatedTouchableOpacity>
+  );
+};
 
+export default function AudioPage(): React.JSX.Element {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -178,7 +178,6 @@ export default function AudioPage(): JSX.Element {
             </View>
           </Animated.View>
 
-         
           {/* Popular Singles Section */}
           <Animated.View
             style={styles.section}

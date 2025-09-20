@@ -8,8 +8,8 @@ import Animated, {
   FadeOutLeft,
   FadeIn,
   FadeOut,
-  SlideInUp,
-  SlideOutDown,
+  ZoomIn,
+  ZoomOut,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -187,7 +187,7 @@ export default function GlassNavBar(): React.JSX.Element {
         </BlurView>
       </View>
 
-      {/* Enhanced Liquid Glass Dialog with iOS-style reveal */}
+      {/* Enhanced Liquid Glass Dialog - Now Centered */}
       <Modal
         visible={isDialogVisible}
         transparent
@@ -205,8 +205,8 @@ export default function GlassNavBar(): React.JSX.Element {
             onPress={handleDialogClose}
           >
               <Animated.View
-                entering={SlideInUp.springify().damping(25).stiffness(350).mass(0.8)}
-                exiting={SlideOutDown.springify().damping(30).stiffness(400)}
+                entering={ZoomIn.springify().damping(25).stiffness(350).mass(0.8)}
+                exiting={ZoomOut.springify().damping(30).stiffness(400)}
                 style={styles.dialogContainer}
               >
               <BlurView
@@ -391,15 +391,18 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBackdrop: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   dialogContainer: {
-    marginHorizontal: 20,
-    marginBottom: Platform.OS === 'ios' ? 100 : 80,
+    width: width * 0.9,
+    maxWidth: 400,
   },
   dialogBlur: {
     borderRadius: 24,
