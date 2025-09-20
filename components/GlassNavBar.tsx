@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View, Platform, Modal, Dimensions, TextInput } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, TouchableOpacity, View, Platform, Modal, Dimensions, TextInput } from "react-native";
 import { BlurView } from "expo-blur";
 import Icon from "./LucideIcons";
 import { ThemedText } from "./themed-text";
@@ -194,6 +194,10 @@ export default function GlassNavBar(): React.JSX.Element {
         animationType="none"
         onRequestClose={handleDialogClose}
       >
+           <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+    >
         <Animated.View
           entering={FadeIn.duration(400)}
           exiting={FadeOut.duration(250)}
@@ -287,7 +291,9 @@ export default function GlassNavBar(): React.JSX.Element {
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
+        </KeyboardAvoidingView>
       </Modal>
+      
     </View>
   );
 }

@@ -5,6 +5,7 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
@@ -17,6 +18,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
+// Create animated component properly
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface AlbumItem {
@@ -139,7 +141,7 @@ const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
 export default function AudioPage(): React.JSX.Element {
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
@@ -220,10 +222,21 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
 
+  statusBarOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    zIndex: 10,
+  },
+
   heroSection: {
     height: 400,
     position: "relative",
     justifyContent: "flex-end",
+    overflow: "hidden",
+    marginTop: -50, // Pull up to fill the screen
   },
   heroImage: {
     position: "absolute",
