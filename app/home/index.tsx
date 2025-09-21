@@ -184,7 +184,7 @@ const Homepage = () => {
           {/* Top Episodes Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Saved</Text>
+              <Text style={styles.sectionTitle}>Recently Saved</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
