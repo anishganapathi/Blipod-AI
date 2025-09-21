@@ -144,7 +144,7 @@ const Homepage = () => {
               <View style={styles.profileContainer}>
                 <View style={styles.profileImage}>
                   <Image
-                    source={require('../../assets/images/Alogo.png')}
+                    source={require('../../assets/images/logo.png')}
                     style={styles.profileLogo}
                     resizeMode="cover"
                   />

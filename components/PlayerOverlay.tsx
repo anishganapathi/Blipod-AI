@@ -45,15 +45,20 @@ export default function PlayerOverlay() {
 
 
   const open = () => {
+    // Set initial position and start animation immediately
+    translateY.value = height;
+    modalScale.value = 0.95;
+    
     translateY.value = withSpring(0, { 
-      damping: 22, 
-      stiffness: 180,
-      mass: 0.7
+      damping: 25, 
+      stiffness: 300,
+      mass: 0.5
     });
-    modalScale.value = withSequence(
-      withTiming(0.95, { duration: 0 }),
-      withSpring(1, { damping: 20, stiffness: 250 })
-    );
+    modalScale.value = withSpring(1, { 
+      damping: 25, 
+      stiffness: 300,
+      mass: 0.5
+    });
   };
 
   const dismiss = () => {
@@ -64,13 +69,8 @@ export default function PlayerOverlay() {
 
   React.useEffect(() => {
     if (isVisible) {
-      // Set initial position off-screen
-      translateY.value = height;
-      modalScale.value = 1;
-      // Start animation
-      setTimeout(() => {
-        open();
-      }, 50);
+      // Start animation immediately without delay
+      open();
     }
   }, [isVisible]);
 
@@ -191,20 +191,12 @@ export default function PlayerOverlay() {
             {/* Header */}
             <View style={styles.header}>
               <TouchableOpacity style={styles.headerBtn} onPress={dismiss}>
-                <Text style={styles.headerIcon}>↓</Text>
+                <Text style={styles.headerIcon}>←</Text>
               </TouchableOpacity>
               <View style={styles.headerCenter}>
                 <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
                 <Text style={styles.headerSubtitle}>Starboy Remix</Text>
               </View>
-              <TouchableOpacity style={styles.headerBtn}>
-                <Text style={styles.headerIcon}>⋯</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Drag indicator */}
-            <View style={styles.dragIndicator}>
-              <View style={styles.dragBar} />
             </View>
 
             {/* Album Art */}
@@ -216,7 +208,10 @@ export default function PlayerOverlay() {
                   <Image source={{ uri: track.image }} style={styles.cover} />
                 ) : (
                   <View style={styles.placeholderCover}>
-                    <Text style={styles.placeholderText}>♪</Text>
+                    <View style={styles.musicNote}>
+                      <View style={styles.noteHead} />
+                      <View style={styles.noteStem} />
+                    </View>
                   </View>
                 )}
               </View>
@@ -269,41 +264,47 @@ export default function PlayerOverlay() {
             {/* Controls */}
             <View style={styles.controlsRow}>
               <TouchableOpacity style={styles.controlBtn} onPress={() => skipBy(-15000)}>
-                <Text style={styles.controlIcon}>⏪</Text>
+                <View style={styles.skipBackIcon}>
+                  <View style={styles.skipTriangle} />
+                  <View style={styles.skipTriangle} />
+                </View>
               </TouchableOpacity>
               
               <Animated.View style={playButtonStyle}>
                 <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
-                  <Text style={styles.playIcon}>
-                    {isPlaying ? '⏸' : '▶'}
-                  </Text>
+                  {isPlaying ? (
+                    <View style={styles.pauseIcon}>
+                      <View style={styles.pauseBar} />
+                      <View style={styles.pauseBar} />
+                    </View>
+                  ) : (
+                    <View style={styles.playTriangle} />
+                  )}
                 </TouchableOpacity>
               </Animated.View>
               
               <TouchableOpacity style={styles.controlBtn} onPress={() => skipBy(30000)}>
-                <Text style={styles.controlIcon}>⏩</Text>
+                <View style={styles.skipForwardIcon}>
+                  <View style={styles.skipTriangle} />
+                  <View style={styles.skipTriangle} />
+                </View>
               </TouchableOpacity>
             </View>
 
             {/* Bottom Controls */}
             <View style={styles.bottomControls}>
               <TouchableOpacity style={styles.bottomBtn}>
-                <Text style={styles.bottomIcon}>⚡</Text>
+                <View style={styles.speedIcon}>
+                  <View style={styles.speedLine} />
+                  <View style={styles.speedLine} />
+                  <View style={styles.speedLine} />
+                </View>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.bottomBtn} onPress={() => setRate(nextRate(rate))}>
                 <Text style={styles.rateText}>{rate}x</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.bottomBtn} onPress={() => setIsLiked(!isLiked)}>
-                <Text style={[styles.bottomIcon, { color: isLiked ? '#1DB954' : '#fff' }]}>
-                  {isLiked ? '♥' : '♡'}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.bottomBtn}>
-                <Text style={styles.bottomIcon}>⋯</Text>
-              </TouchableOpacity>
             </View>
           </LinearGradient>
         </Animated.View>
@@ -369,10 +370,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerIcon: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  chevronDown: {
+    width: 12,
+    height: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chevronLine: {
+    position: 'absolute',
+    width: 6,
+    height: 1.5,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+  },
+  moreIcon: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 14,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#fff',
   },
   headerCenter: {
     flex: 1,
@@ -427,9 +447,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderText: {
-    fontSize: 48,
-    color: 'rgba(255,255,255,0.3)',
+  musicNote: {
+    width: 30,
+    height: 40,
+    position: 'relative',
+  },
+  noteHead: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 20,
+    height: 15,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 10,
+    transform: [{ rotate: '-15deg' }],
+  },
+  noteStem: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 2,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 1,
   },
   meta: {
     alignItems: 'center',
@@ -498,15 +538,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    marginBottom: 40,
+    marginBottom: 15,
   },
   controlBtn: {
     padding: 15,
     marginHorizontal: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  controlIcon: {
-    color: '#fff',
-    fontSize: 30,
+  skipBackIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 30,
+    height: 20,
+    transform: [{ rotate: '180deg' }],
+  },
+  skipForwardIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 30,
+    height: 20,
+  },
+  skipBar: {
+    width: 2,
+    height: 20,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+  },
+  skipTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 8,
+    borderRightWidth: 0,
+    borderBottomWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: '#fff',
+    borderRightColor: 'transparent',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    marginLeft: 2,
   },
   playButton: {
     width: 70,
@@ -521,11 +593,32 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  playIcon: {
-    color: '#000',
-    fontSize: 28,
-    fontWeight: '700',
-    marginLeft: 2,
+  playTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 12,
+    borderRightWidth: 0,
+    borderBottomWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: '#000',
+    borderRightColor: 'transparent',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    marginLeft: 3,
+  },
+  pauseIcon: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pauseBar: {
+    width: 4,
+    height: 16,
+    backgroundColor: '#000',
+    borderRadius: 2,
+    marginHorizontal: 2,
   },
   bottomControls: {
     flexDirection: 'row',
@@ -536,15 +629,73 @@ const styles = StyleSheet.create({
   },
   bottomBtn: {
     padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  bottomIcon: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
+  speedIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 18,
+    justifyContent: 'space-between',
+  },
+  speedLine: {
+    width: 2,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+    height: 12,
+  },
+  heartContainer: {
+    width: 18,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heartShape: {
+    width: 12,
+    height: 11,
+    position: 'relative',
+    transform: [{ rotate: '45deg' }],
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderRadius: 6,
+  },
+  heartLeft: {
+    position: 'absolute',
+    left: -6,
+    top: -3,
+    width: 6,
+    height: 9,
+    backgroundColor: 'transparent',
+    borderRadius: 6,
+    transform: [{ rotate: '-45deg' }],
+    borderWidth: 1.5,
+    borderColor: 'inherit',
+  },
+  heartRight: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    width: 6,
+    height: 9,
+    backgroundColor: 'transparent',
+    borderRadius: 6,
+    transform: [{ rotate: '45deg' }],
+    borderWidth: 1.5,
+    borderColor: 'inherit',
   },
   rateText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  headerIcon: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  bottomIcon: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '500',
   },
 });

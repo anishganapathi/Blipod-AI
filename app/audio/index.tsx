@@ -163,21 +163,20 @@ export default function AudioPage(): React.JSX.Element {
               style={styles.heroGradient}
             />
             <View style={styles.heroContent}>
-              <ThemedText style={styles.artistName}>Audio</ThemedText>
-              <Animated.View
-                entering={FadeInUp.delay(200).springify().damping(20).stiffness(300)}
-              >
-                {/* Play Button */}
-                <TouchableOpacity
-                  style={styles.playButton}
-                  activeOpacity={0.8}
-                  onPress={() => console.log("Play pressed")}
-                >
-                  <MaterialIcons name="play-arrow" size={28} color="#000" />
-                  <ThemedText style={styles.playText}>Play</ThemedText>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
+  <ThemedText style={styles.artistName}>Audio</ThemedText>
+  <Animated.View
+    entering={FadeInUp.delay(200).springify().damping(20).stiffness(300)}
+  >
+    {/* Play Button */}
+    <TouchableOpacity
+      style={styles.playButton}
+      activeOpacity={0.8}
+      onPress={() => console.log("Play pressed")}
+    >
+      <MaterialIcons name="play-arrow" size={28} color="#000" />
+    </TouchableOpacity>
+  </Animated.View>
+</View>
           </Animated.View>
 
           {/* Popular Singles Section */}
@@ -185,17 +184,7 @@ export default function AudioPage(): React.JSX.Element {
             style={styles.section}
             entering={FadeInUp.delay(700).springify().damping(20).stiffness(300)}
           >
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <ThemedText style={styles.sectionTitle}>
-                  Popular articles 
-                </ThemedText>
-              </View>
-              <TouchableOpacity>
-                <ThemedText style={styles.viewAllText}>View all</ThemedText>
-              </TouchableOpacity>
-            </View>
-
+        
             <View style={styles.singlesList}>
               {POPULAR_SINGLES.map((single, index) => (
                 <Animated.View
@@ -254,32 +243,39 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  heroContent: { padding: 24, paddingBottom: 40, zIndex: 1 },
-  artistName: {
-    fontSize: 48,
-    fontWeight: "800",
-    color: "#fff",
-    marginBottom: 20,
-    letterSpacing: -1,
-    textShadowColor: "rgba(0,0,0,0.7)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
+heroContent: { 
+  padding: 24, 
+  paddingBottom: 40, 
+  zIndex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between"
+},
+artistName: {
+  fontSize: 48,
+  fontWeight: "800",
+  color: "#fff",
+  marginBottom: 0, // Remove bottom margin since they're now side by side
+  letterSpacing: -1,
+  textShadowColor: "rgba(0,0,0,0.7)",
+  textShadowOffset: { width: 0, height: 2 },
+  textShadowRadius: 4,
+  flex: 1, // Allow text to take available space
+},
 
   playButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFA500",
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignSelf: "flex-start",
-    shadowColor: "#FFA500",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+  width: 56,
+  height: 56,
+  borderRadius: 28, 
+  backgroundColor: "#FFA500",
+  justifyContent: "center",
+  alignItems: "center",
+  shadowColor: "#FFA500",
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 8,
+},
   playText: {
     color: "#000",
     fontSize: 16,
