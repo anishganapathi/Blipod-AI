@@ -97,15 +97,6 @@ const Homepage = () => {
     <TouchableOpacity
       style={styles.podcastCard}
       activeOpacity={0.8}
-      onPress={() =>
-        open({
-          title: item.title,
-          subtitle: item.publisher,
-          image: item.image,
-          publisher: item.publisher,
-          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        })
-      }
     >
       <Image source={{ uri: item.image }} style={styles.podcastImage} />
       <View style={styles.podcastOverlay}>
@@ -116,7 +107,19 @@ const Homepage = () => {
   );
 
   const EpisodeItem = ({ item }: { item: Episode }) => (
-    <TouchableOpacity style={styles.episodeItem} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={styles.episodeItem} 
+      activeOpacity={0.8}
+      onPress={() =>
+        open({
+          title: item.title,
+          subtitle: item.subtitle,
+          image: item.thumbnail,
+          publisher: item.subtitle,
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        })
+      }
+    >
       <Image source={{ uri: item.thumbnail }} style={styles.episodeThumbnail} />
       <View style={styles.episodeContent}>
         <Text style={styles.episodeTitle}>{item.title}</Text>
@@ -162,7 +165,7 @@ const Homepage = () => {
 
           
 
-          {/* Recentaly Saved Section */}
+          {/* For you Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>For you</Text>
@@ -181,7 +184,7 @@ const Homepage = () => {
             />
           </View>
 
-          {/* Top Episodes Section */}
+          {/* Recently saved Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recently Saved</Text>
