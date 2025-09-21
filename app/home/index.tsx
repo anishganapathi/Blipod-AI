@@ -126,10 +126,6 @@ const Homepage = () => {
         <Text style={styles.episodeSubtitle}>{item.subtitle}</Text>
         <Text style={styles.episodeDate}>{item.date}</Text>
       </View>
-      <View style={styles.episodeActions}>
-        <MaterialIcons name="play-circle-outline" size={24} color="#FFA500" />
-        <Text style={styles.episodeDuration}>{item.duration}</Text>
-      </View>
     </TouchableOpacity>
   );
 
@@ -162,8 +158,6 @@ const Homepage = () => {
               <MaterialIcons name="search" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-
-          
 
           {/* For you Section */}
           <View style={styles.section}>
@@ -373,30 +367,22 @@ const styles = StyleSheet.create({
   },
   episodeContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   episodeTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   episodeSubtitle: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   episodeDate: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.5)',
-  },
-  episodeActions: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  episodeDuration: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 4,
   },
 });
 
