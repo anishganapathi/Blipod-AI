@@ -19,8 +19,7 @@ import Animated, {
   interpolate,
   withSequence,
   Easing,
-  SlideInDown,
-  SlideOutDown,
+  runOnJS,
 } from "react-native-reanimated";
 import ProfilePage from "@/app/account";
 import HomePage from "@/app/home";
@@ -53,6 +52,39 @@ export default function GlassNavBar(): React.JSX.Element {
   const fabOpacity = useSharedValue(1);
   const fabRotation = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
+
+  // Mini Player animation values
+  const miniPlayerScale = useSharedValue(1);
+  const miniPlayerOpacity = useSharedValue(1);
+  const miniPlayerTranslateY = useSharedValue(track ? 0 : 100);
+  const miniPlayerVisible = useSharedValue(track ? 1 : 0);
+
+  // Update mini player reveal animation when track changes
+  React.useEffect(() => {
+    if (track) {
+      // Reveal animation
+      miniPlayerTranslateY.value = withSpring(0, {
+        damping: 20,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      miniPlayerVisible.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.quad),
+      });
+    } else {
+      // Hide animation
+      miniPlayerTranslateY.value = withSpring(100, {
+        damping: 25,
+        stiffness: 400,
+        mass: 0.6,
+      });
+      miniPlayerVisible.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.in(Easing.quad),
+      });
+    }
+  }, [track]);
 
   const handleFABPress = (): void => {
     fabScale.value = withSequence(
@@ -90,6 +122,35 @@ export default function GlassNavBar(): React.JSX.Element {
     setLinkInput('');
   };
 
+  const handleMiniPlayerPress = (): void => {
+    // Smooth scale and opacity animation
+    miniPlayerScale.value = withSequence(
+      withTiming(0.95, { 
+        duration: 120,
+        easing: Easing.out(Easing.quad)
+      }),
+      withSpring(1, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8
+      })
+    );
+
+    miniPlayerOpacity.value = withSequence(
+      withTiming(0.8, { 
+        duration: 120,
+        easing: Easing.out(Easing.quad)
+      }),
+      withTiming(1, { 
+        duration: 200,
+        easing: Easing.inOut(Easing.quad)
+      })
+    );
+
+    // Call the original showFullPlayer function
+    showFullPlayer();
+  };
+
   const fabAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -105,6 +166,16 @@ export default function GlassNavBar(): React.JSX.Element {
     return {
       opacity: overlayOpacity.value,
       transform: [{ scale }],
+    };
+  });
+
+  const miniPlayerAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: miniPlayerScale.value },
+        { translateY: miniPlayerTranslateY.value }
+      ],
+      opacity: miniPlayerOpacity.value * miniPlayerVisible.value,
     };
   });
 
@@ -125,22 +196,20 @@ export default function GlassNavBar(): React.JSX.Element {
         </Animated.View>
       </View>
 
-      {/* Floating Mini Player - Only shows when track exists */}
-      {track && (
-        <Animated.View
-          entering={SlideInDown.springify().damping(20).stiffness(300)}
-          exiting={SlideOutDown.springify().damping(25).stiffness(400)}
-          style={styles.miniPlayerContainer}
-        >
+      {/* Floating Mini Player - Always render but animate visibility */}
+      <Animated.View
+        style={[styles.miniPlayerContainer, miniPlayerAnimatedStyle]}
+        pointerEvents={track ? 'auto' : 'none'}
+      >
           <BlurView intensity={40} tint="dark" style={styles.miniPlayerBlur}>
             <TouchableOpacity
               style={styles.miniPlayer}
-              onPress={showFullPlayer}
+              onPress={handleMiniPlayerPress}
               activeOpacity={0.9}
             >
               <View style={styles.miniPlayerContent}>
                 <View style={styles.miniPlayerLeft}>
-                  {track.image ? (
+                  {track?.image ? (
                     <Image
                       source={{ uri: track.image }}
                       style={styles.miniPlayerImage}
@@ -152,10 +221,10 @@ export default function GlassNavBar(): React.JSX.Element {
                   )}
                   <View style={styles.miniPlayerInfo}>
                     <ThemedText style={styles.miniPlayerTitle} numberOfLines={1}>
-                      {track.title}
+                      {track?.title || ''}
                     </ThemedText>
                     <ThemedText style={styles.miniPlayerSubtitle} numberOfLines={1}>
-                      {track.publisher || track.subtitle || 'Unknown'}
+                      {track?.publisher || track?.subtitle || 'Unknown'}
                     </ThemedText>
                   </View>
                 </View>
@@ -191,7 +260,6 @@ export default function GlassNavBar(): React.JSX.Element {
             </TouchableOpacity>
           </BlurView>
         </Animated.View>
-      )}
 
       {/* Floating Action Button */}
       <View style={[styles.fabWrapper, track && styles.fabWrapperWithPlayer]} pointerEvents="box-none">

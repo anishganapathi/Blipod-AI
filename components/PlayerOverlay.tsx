@@ -19,25 +19,67 @@ export default function PlayerOverlay() {
   const { isVisible, track, isPlaying, toggle, hideFullPlayer, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [isDraggingModal, setIsDraggingModal] = useState(false);
-  const [sliderValue, setSliderValue] = useState(0);
+  const [tempSliderValue, setTempSliderValue] = useState(0);
 
   const translateY = useSharedValue(height);
   const modalScale = useSharedValue(1);
   const sliderThumbScale = useSharedValue(1);
   const playButtonScale = useSharedValue(1);
-  const sliderContainerRef = useRef(null);
 
+  // Calculate actual progress percentage
   const progressPct = useMemo(() => {
-    if (isDraggingSlider) return sliderValue;
-    if (!durationMs) return 0;
-    return Math.min(1, positionMs / durationMs);
-  }, [positionMs, durationMs, isDraggingSlider, sliderValue]);
+    if (!durationMs || durationMs === 0) return 0;
+    if (isDraggingSlider) return tempSliderValue;
+    return Math.min(1, Math.max(0, positionMs / durationMs));
+  }, [positionMs, durationMs, isDraggingSlider, tempSliderValue]);
 
   const handleSeek = (position: number) => {
-    if (durationMs && seekTo) {
+    if (durationMs && seekTo && durationMs > 0) {
       const seekTime = Math.floor(position * durationMs);
-      seekTo(seekTime);
+      seekTo(Math.max(0, Math.min(durationMs, seekTime)));
     }
+  };
+
+  const handleSliderTouch = (evt: any) => {
+    if (!durationMs) return;
+    
+    setIsDraggingSlider(true);
+    sliderThumbScale.value = withSpring(1.4, { 
+      damping: 20, 
+      stiffness: 400 
+    });
+
+    const { locationX } = evt.nativeEvent;
+    const containerWidth = width - 56;
+    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
+    
+    setTempSliderValue(progress);
+  };
+
+  const handleSliderMove = (evt: any) => {
+    if (!durationMs || !isDraggingSlider) return;
+    
+    const { locationX } = evt.nativeEvent;
+    const containerWidth = width - 56;
+    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
+    
+    setTempSliderValue(progress);
+  };
+
+  const handleSliderRelease = (evt: any) => {
+    if (!durationMs) return;
+
+    const { locationX } = evt.nativeEvent;
+    const containerWidth = width - 56;
+    const finalProgress = Math.max(0, Math.min(1, locationX / containerWidth));
+    
+    handleSeek(finalProgress);
+    
+    setIsDraggingSlider(false);
+    sliderThumbScale.value = withSpring(1, { 
+      damping: 25, 
+      stiffness: 300 
+    });
   };
 
   const open = () => {
@@ -68,76 +110,6 @@ export default function PlayerOverlay() {
     }
   }, [isVisible]);
 
-  // Main modal pan responder - handles drag to dismiss
-  const modalPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => {
-        return !isDraggingSlider && Math.abs(gestureState.dy) > 3;
-      },
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return !isDraggingSlider && gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
-      },
-      onPanResponderGrant: () => {
-        setIsDraggingModal(true);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (isDraggingSlider) return;
-        const newY = Math.max(0, gestureState.dy);
-        translateY.value = newY;
-        
-        const scale = 1 - (newY / height) * 0.05;
-        modalScale.value = Math.max(0.95, scale);
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        setIsDraggingModal(false);
-        
-        if (gestureState.dy > height * 0.25 || gestureState.vy > 1000) {
-          dismiss();
-        } else {
-          translateY.value = withTiming(0, { duration: 300 });
-          modalScale.value = withTiming(1, { duration: 300 });
-        }
-      },
-    })
-  ).current;
-
-  // Slider pan responder
-  const sliderPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: (evt) => {
-        const { locationX } = evt.nativeEvent;
-        const containerWidth = width - 56;
-        const progress = Math.max(0, Math.min(1, locationX / containerWidth));
-        
-        setIsDraggingSlider(true);
-        setSliderValue(progress);
-        sliderThumbScale.value = withTiming(1.4, { duration: 100 });
-        handleSeek(progress);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        const { locationX } = evt.nativeEvent;
-        const containerWidth = width - 56;
-        const progress = Math.max(0, Math.min(1, locationX / containerWidth));
-        
-        setSliderValue(progress);
-        handleSeek(progress);
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        setIsDraggingSlider(false);
-        sliderThumbScale.value = withTiming(1, { duration: 150 });
-        
-        const { locationX } = evt.nativeEvent;
-        const containerWidth = width - 56;
-        const finalProgress = Math.max(0, Math.min(1, locationX / containerWidth));
-        handleSeek(finalProgress);
-      },
-    })
-  ).current;
-
   const handlePlayPress = () => {
     playButtonScale.value = withSequence(
       withSpring(0.9, { damping: 15, stiffness: 400 }),
@@ -163,8 +135,11 @@ export default function PlayerOverlay() {
 
   if (!isVisible || !track) return null;
 
+  // Format time for display
+  const currentTime = isDraggingSlider ? (tempSliderValue * durationMs) : positionMs;
+
   return (
-    <View style={styles.overlay} {...modalPanResponder.panHandlers}>
+    <View style={styles.overlay}>
       <BlurView intensity={100} tint="dark" style={styles.blurContainer}>
         <Animated.View style={[styles.card, containerStyle]}>
           <LinearGradient 
@@ -211,9 +186,10 @@ export default function PlayerOverlay() {
             {/* Progress Slider */}
             <View style={styles.progressSection}>
               <View 
-                ref={sliderContainerRef}
-                style={styles.sliderContainer} 
-                {...sliderPanResponder.panHandlers}
+                style={styles.sliderContainer}
+                onTouchStart={handleSliderTouch}
+                onTouchMove={handleSliderMove}
+                onTouchEnd={handleSliderRelease}
               >
                 <View style={styles.sliderTrack}>
                   <View 
@@ -222,7 +198,7 @@ export default function PlayerOverlay() {
                       { width: `${progressPct * 100}%` }
                     ]} 
                   />
-                  <Animated.View 
+                  <View 
                     style={[
                       styles.sliderThumb, 
                       { 
@@ -236,10 +212,10 @@ export default function PlayerOverlay() {
               
               <View style={styles.timeRow}>
                 <Text style={styles.timeText}>
-                  {formatTime(isDraggingSlider ? (sliderValue * durationMs) : positionMs)}
+                  {formatTime(currentTime || 0)}
                 </Text>
                 <Text style={styles.timeText}>
-                  {formatTime(durationMs)}
+                  {formatTime(durationMs || 0)}
                 </Text>
               </View>
             </View>
@@ -296,6 +272,7 @@ export default function PlayerOverlay() {
 }
 
 function formatTime(ms: number): string {
+  if (!ms || ms < 0) return '0:00';
   const total = Math.floor(ms / 1000);
   const m = Math.floor(total / 60).toString();
   const s = (total % 60).toString().padStart(2, '0');
