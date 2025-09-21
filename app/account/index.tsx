@@ -7,6 +7,7 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -55,30 +56,13 @@ export default function ProfilePage() {
         },
       ]}
     >
-      <LinearGradient
-        colors={['#FF8C00', '#FFA500', '#FF7F00']}
-        style={styles.profileIcon}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.soundWaveContainer}>
-          {Array.from({ length: 15 }, (_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.soundWave,
-                {
-                  height: Math.random() * 30 + 10,
-                  opacity: i === 7 ? 1 : 0.6 + Math.random() * 0.4,
-                },
-              ]}
-            />
-          ))}
-        </View>
-        <View style={styles.boltContainer}>
-          <MaterialIcons name="bolt" size={24} color="#FFA500" />
-        </View>
-      </LinearGradient>
+      <View style={styles.profileIcon}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
     </Animated.View>
   );
 
@@ -237,29 +221,19 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FFA500',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 12,
   },
-  soundWaveContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-  },
-  soundWave: {
-    width: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 1.5,
-    marginHorizontal: 1,
-  },
-  boltContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 4,
-    position: 'absolute',
+  logoImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 27,
   },
   profileName: {
     fontSize: 28,

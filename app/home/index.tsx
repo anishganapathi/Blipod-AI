@@ -162,7 +162,7 @@ const Homepage = () => {
 
           
 
-          {/* New & Noteworthy Section */}
+          {/* Recentaly Saved Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>For you</Text>
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
   profileLogo: {
     width: '100%',
     height: '100%',
+    borderRadius: 25,
   },
   profileText: {
     flex: 1,
