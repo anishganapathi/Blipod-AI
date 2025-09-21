@@ -1,12 +1,11 @@
-import React, { useMemo, useState, useRef } from 'react';
-import { Dimensions, Image, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
   withSpring, 
   withTiming, 
   runOnJS,
-  interpolate,
   withSequence
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,7 +17,6 @@ const { height, width } = Dimensions.get('window');
 export default function PlayerOverlay() {
   const { isVisible, track, isPlaying, toggle, hideFullPlayer, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
-  const [isDraggingModal, setIsDraggingModal] = useState(false);
   const [tempSliderValue, setTempSliderValue] = useState(0);
 
   const translateY = useSharedValue(height);
@@ -38,48 +36,6 @@ export default function PlayerOverlay() {
       const seekTime = Math.floor(position * durationMs);
       seekTo(Math.max(0, Math.min(durationMs, seekTime)));
     }
-  };
-
-  const handleSliderTouch = (evt: any) => {
-    if (!durationMs) return;
-    
-    setIsDraggingSlider(true);
-    sliderThumbScale.value = withSpring(1.4, { 
-      damping: 20, 
-      stiffness: 400 
-    });
-
-    const { locationX } = evt.nativeEvent;
-    const containerWidth = width - 56;
-    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
-    
-    setTempSliderValue(progress);
-  };
-
-  const handleSliderMove = (evt: any) => {
-    if (!durationMs || !isDraggingSlider) return;
-    
-    const { locationX } = evt.nativeEvent;
-    const containerWidth = width - 56;
-    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
-    
-    setTempSliderValue(progress);
-  };
-
-  const handleSliderRelease = (evt: any) => {
-    if (!durationMs) return;
-
-    const { locationX } = evt.nativeEvent;
-    const containerWidth = width - 56;
-    const finalProgress = Math.max(0, Math.min(1, locationX / containerWidth));
-    
-    handleSeek(finalProgress);
-    
-    setIsDraggingSlider(false);
-    sliderThumbScale.value = withSpring(1, { 
-      damping: 25, 
-      stiffness: 300 
-    });
   };
 
   const open = () => {
@@ -109,6 +65,43 @@ export default function PlayerOverlay() {
       open();
     }
   }, [isVisible]);
+
+  const handleSliderPress = (evt: any) => {
+    if (!durationMs) return;
+    
+    const { locationX } = evt.nativeEvent;
+    const containerWidth = width - 56;
+    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
+    
+    setIsDraggingSlider(true);
+    setTempSliderValue(progress);
+    sliderThumbScale.value = withSpring(1.4, { 
+      damping: 20, 
+      stiffness: 400 
+    });
+    handleSeek(progress);
+  };
+
+  const handleSliderMove = (evt: any) => {
+    if (!durationMs || !isDraggingSlider) return;
+    
+    const { locationX } = evt.nativeEvent;
+    const containerWidth = width - 56;
+    const progress = Math.max(0, Math.min(1, locationX / containerWidth));
+    
+    setTempSliderValue(progress);
+    handleSeek(progress);
+  };
+
+  const handleSliderRelease = () => {
+    if (!durationMs) return;
+    
+    setIsDraggingSlider(false);
+    sliderThumbScale.value = withSpring(1, { 
+      damping: 25, 
+      stiffness: 300 
+    });
+  };
 
   const handlePlayPress = () => {
     playButtonScale.value = withSequence(
@@ -148,13 +141,16 @@ export default function PlayerOverlay() {
           >
             {/* Header */}
             <View style={styles.header}>
-              <TouchableOpacity style={styles.headerBtn} onPress={dismiss}>
-                <Text style={styles.headerIcon}>←</Text>
-              </TouchableOpacity>
+              <View style={styles.headerLeft}>
+                {/* Empty space for balance */}
+              </View>
               <View style={styles.headerCenter}>
                 <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
                 <Text style={styles.headerSubtitle}>Recently Saved</Text>
               </View>
+              <TouchableOpacity style={styles.headerBtn} onPress={dismiss}>
+                <Text style={styles.headerIcon}>✕</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Album Art */}
@@ -187,7 +183,7 @@ export default function PlayerOverlay() {
             <View style={styles.progressSection}>
               <View 
                 style={styles.sliderContainer}
-                onTouchStart={handleSliderTouch}
+                onTouchStart={handleSliderPress}
                 onTouchMove={handleSliderMove}
                 onTouchEnd={handleSliderRelease}
               >
@@ -198,7 +194,7 @@ export default function PlayerOverlay() {
                       { width: `${progressPct * 100}%` }
                     ]} 
                   />
-                  <View 
+                  <Animated.View 
                     style={[
                       styles.sliderThumb, 
                       { 
@@ -328,6 +324,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerLeft: {
+    width: 32,
+    height: 32,
   },
   headerCenter: {
     flex: 1,
