@@ -20,11 +20,13 @@ type PlayerContextValue = {
   rate: number;
   track?: PlayerTrack;
   open: (track: PlayerTrack) => Promise<void>;
-  close: () => void;
+  close: () => Promise<void>;
   toggle: () => Promise<void>;
   seekTo: (ms: number) => Promise<void>;
   skipBy: (deltaMs: number) => Promise<void>;
   setRate: (rate: number) => Promise<void>;
+  showFullPlayer: () => void;
+  hideFullPlayer: () => void;
 };
 
 const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
@@ -37,7 +39,7 @@ export const usePlayer = (): PlayerContextValue => {
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const soundRef = useRef<Audio.Sound | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // Full player overlay visibility
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
@@ -60,56 +62,89 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (soundRef.current) {
       try {
         await soundRef.current.unloadAsync();
-      } catch {}
+      } catch (error) {
+        console.log('Error unloading sound:', error);
+      }
       soundRef.current.setOnPlaybackStatusUpdate(null);
       soundRef.current = null;
     }
   }, []);
 
   const open = useCallback(async (next: PlayerTrack) => {
-    await unload();
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: next.url },
-      { shouldPlay: true, rate },
-      (status: AVPlaybackStatus) => {
-        if (!status.isLoaded) return;
-        setIsPlaying(status.isPlaying ?? false);
-        setPositionMs(status.positionMillis ?? 0);
-        setDurationMs(status.durationMillis ?? 0);
-      }
-    );
-    soundRef.current = sound;
-    setTrack(next);
-    setIsVisible(true);
+    try {
+      // Stop and unload any existing audio
+      await unload();
+      
+      // Reset states
+      setIsPlaying(false);
+      setPositionMs(0);
+      setDurationMs(0);
+      
+      // Load new track
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: next.url },
+        { shouldPlay: true, rate },
+        (status: AVPlaybackStatus) => {
+          if (!status.isLoaded) return;
+          setIsPlaying(status.isPlaying ?? false);
+          setPositionMs(status.positionMillis ?? 0);
+          setDurationMs(status.durationMillis ?? 0);
+        }
+      );
+      
+      soundRef.current = sound;
+      setTrack(next);
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('Error loading track:', error);
+    }
   }, [rate, unload]);
 
-  const close = useCallback(() => {
-    setIsVisible(false);
-  }, []);
+  const close = useCallback(async () => {
+    try {
+      // Stop and unload audio
+      await unload();
+      
+      // Clear all state
+      setTrack(undefined);
+      setIsVisible(false);
+      setIsPlaying(false);
+      setPositionMs(0);
+      setDurationMs(0);
+    } catch (error) {
+      console.error('Error closing player:', error);
+    }
+  }, [unload]);
 
   const toggle = useCallback(async () => {
     try {
       const sound = soundRef.current;
       if (!sound) return;
+      
       const status = await sound.getStatusAsync();
       if (!('isLoaded' in status) || !status.isLoaded) return;
 
       if (status.isPlaying) {
-        setIsPlaying(false); // optimistic update
         await sound.pauseAsync();
+        setIsPlaying(false);
       } else {
-        setIsPlaying(true); // optimistic update
         await sound.playAsync();
+        setIsPlaying(true);
       }
-    } catch (e) {
-      // no-op; keep UI stable
+    } catch (error) {
+      console.error('Error toggling playback:', error);
     }
   }, []);
 
   const seekTo = useCallback(async (ms: number) => {
-    const sound = soundRef.current;
-    if (!sound) return;
-    await sound.setPositionAsync(Math.max(0, ms));
+    try {
+      const sound = soundRef.current;
+      if (!sound) return;
+      await sound.setPositionAsync(Math.max(0, ms));
+    } catch (error) {
+      console.error('Error seeking:', error);
+    }
   }, []);
 
   const skipBy = useCallback(async (deltaMs: number) => {
@@ -118,19 +153,44 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [positionMs, seekTo]);
 
   const setRate = useCallback(async (r: number) => {
-    const sound = soundRef.current;
-    setPlaybackRate(r);
-    if (sound) {
-      await sound.setRateAsync(r, true);
+    try {
+      const sound = soundRef.current;
+      setPlaybackRate(r);
+      if (sound) {
+        await sound.setRateAsync(r, true);
+      }
+    } catch (error) {
+      console.error('Error setting rate:', error);
     }
   }, []);
 
+  const showFullPlayer = useCallback(() => {
+    setIsVisible(true);
+  }, []);
+
+  const hideFullPlayer = useCallback(() => {
+    setIsVisible(false);
+  }, []);
+
   const value = useMemo(
-    () => ({ isVisible, isPlaying, positionMs, durationMs, rate, track, open, close, toggle, seekTo, skipBy, setRate }),
-    [isVisible, isPlaying, positionMs, durationMs, rate, track, open, close, toggle, seekTo, skipBy, setRate]
+    () => ({ 
+      isVisible, 
+      isPlaying, 
+      positionMs, 
+      durationMs, 
+      rate, 
+      track, 
+      open, 
+      close, 
+      toggle, 
+      seekTo, 
+      skipBy, 
+      setRate,
+      showFullPlayer,
+      hideFullPlayer
+    }),
+    [isVisible, isPlaying, positionMs, durationMs, rate, track, open, close, toggle, seekTo, skipBy, setRate, showFullPlayer, hideFullPlayer]
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 };
-
-

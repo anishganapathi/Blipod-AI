@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, StyleSheet, TouchableOpacity, View, Platform, Modal, Dimensions, TextInput } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, TouchableOpacity, View, Platform, Modal, Dimensions, TextInput, Image } from "react-native";
 import { BlurView } from "expo-blur";
 import Icon from "./LucideIcons";
 import { ThemedText } from "./themed-text";
+import { MaterialIcons } from '@expo/vector-icons';
+import { usePlayer } from '@/context/PlayerContext';
 import Animated, {
   FadeInRight,
   FadeOutLeft,
@@ -17,6 +19,8 @@ import Animated, {
   interpolate,
   withSequence,
   Easing,
+  SlideInDown,
+  SlideOutDown,
 } from "react-native-reanimated";
 import ProfilePage from "@/app/account";
 import HomePage from "@/app/home";
@@ -26,7 +30,7 @@ import BrowsePage from "@/app/browse";
 interface NavItem {
   icon: string;
   label: string;
-  screen: React.ComponentType; // component reference, not invoked here
+  screen: React.ComponentType;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -42,6 +46,7 @@ export default function GlassNavBar(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(0);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [linkInput, setLinkInput] = useState('');
+  const { track, isPlaying, toggle, showFullPlayer, close } = usePlayer();
 
   // FAB animation values
   const fabScale = useSharedValue(1);
@@ -50,7 +55,6 @@ export default function GlassNavBar(): React.JSX.Element {
   const overlayOpacity = useSharedValue(0);
 
   const handleFABPress = (): void => {
-    // iOS-style haptic feedback simulation through animation
     fabScale.value = withSequence(
       withSpring(0.85, { 
         damping: 20,
@@ -68,29 +72,24 @@ export default function GlassNavBar(): React.JSX.Element {
       })
     );
 
-    // Subtle rotation for premium feel
     fabRotation.value = withSequence(
       withTiming(15, { duration: 150 }),
       withTiming(0, { duration: 200 })
     );
 
-    // Reveal overlay with smooth timing
     overlayOpacity.value = withTiming(1, { duration: 300 });
     
-    // Show modal after animation starts
     setTimeout(() => {
       setIsDialogVisible(true);
     }, 100);
   };
 
   const handleDialogClose = (): void => {
-    // Smooth hide animation
     overlayOpacity.value = withTiming(0, { duration: 200 });
     setIsDialogVisible(false);
     setLinkInput('');
   };
 
-  // Animated styles for FAB
   const fabAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -101,7 +100,6 @@ export default function GlassNavBar(): React.JSX.Element {
     };
   });
 
-  // Animated overlay style for reveal effect
   const overlayAnimatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(overlayOpacity.value, [0, 1], [0.3, 1]);
     return {
@@ -115,7 +113,7 @@ export default function GlassNavBar(): React.JSX.Element {
       {/* Active screen with shared axis transition */}
       <View style={styles.screenContainer}>
         <Animated.View
-          key={activeTab} // triggers animation on tab change
+          key={activeTab}
           entering={FadeInRight.duration(250)}
           exiting={FadeOutLeft.duration(250)}
           style={{ flex: 1 }}
@@ -127,8 +125,76 @@ export default function GlassNavBar(): React.JSX.Element {
         </Animated.View>
       </View>
 
-      {/* Floating Action Button (glass) with enhanced animation */}
-      <View style={styles.fabWrapper} pointerEvents="box-none">
+      {/* Floating Mini Player - Only shows when track exists */}
+      {track && (
+        <Animated.View
+          entering={SlideInDown.springify().damping(20).stiffness(300)}
+          exiting={SlideOutDown.springify().damping(25).stiffness(400)}
+          style={styles.miniPlayerContainer}
+        >
+          <BlurView intensity={40} tint="dark" style={styles.miniPlayerBlur}>
+            <TouchableOpacity
+              style={styles.miniPlayer}
+              onPress={showFullPlayer}
+              activeOpacity={0.9}
+            >
+              <View style={styles.miniPlayerContent}>
+                <View style={styles.miniPlayerLeft}>
+                  {track.image ? (
+                    <Image
+                      source={{ uri: track.image }}
+                      style={styles.miniPlayerImage}
+                    />
+                  ) : (
+                    <View style={styles.miniPlayerPlaceholder}>
+                      <MaterialIcons name="music-note" size={16} color="rgba(255,255,255,0.6)" />
+                    </View>
+                  )}
+                  <View style={styles.miniPlayerInfo}>
+                    <ThemedText style={styles.miniPlayerTitle} numberOfLines={1}>
+                      {track.title}
+                    </ThemedText>
+                    <ThemedText style={styles.miniPlayerSubtitle} numberOfLines={1}>
+                      {track.publisher || track.subtitle || 'Unknown'}
+                    </ThemedText>
+                  </View>
+                </View>
+                
+                <View style={styles.miniPlayerControls}>
+                  <TouchableOpacity
+                    style={styles.miniPlayerButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      toggle();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    {isPlaying ? (
+                      <MaterialIcons name="pause" size={20} color="#fff" />
+                    ) : (
+                      <MaterialIcons name="play-arrow" size={20} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.miniPlayerButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      close();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="close" size={18} color="rgba(255,255,255,0.8)" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </BlurView>
+        </Animated.View>
+      )}
+
+      {/* Floating Action Button */}
+      <View style={[styles.fabWrapper, track && styles.fabWrapperWithPlayer]} pointerEvents="box-none">
         <Animated.View style={fabAnimatedStyle}>
           <BlurView intensity={50} tint="dark" style={styles.fabGlass}>
             <TouchableOpacity
@@ -143,7 +209,6 @@ export default function GlassNavBar(): React.JSX.Element {
           </BlurView>
         </Animated.View>
 
-        {/* Ripple effect overlay */}
         <Animated.View 
           style={[styles.fabRipple, overlayAnimatedStyle]}
           pointerEvents="none"
@@ -152,7 +217,7 @@ export default function GlassNavBar(): React.JSX.Element {
         </Animated.View>
       </View>
 
-      {/* Glass bottom nav with enhanced glassy effect */}
+      {/* Glass bottom nav */}
       <View style={styles.container}>
         <BlurView style={styles.blurContainer} intensity={30} tint="dark">
           <View style={styles.content}>
@@ -187,113 +252,111 @@ export default function GlassNavBar(): React.JSX.Element {
         </BlurView>
       </View>
 
-      {/* Enhanced Liquid Glass Dialog - Now Centered */}
+      {/* Add Link Dialog */}
       <Modal
         visible={isDialogVisible}
         transparent
         animationType="none"
         onRequestClose={handleDialogClose}
       >
-           <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
-    >
-        <Animated.View
-          entering={FadeIn.duration(400)}
-          exiting={FadeOut.duration(250)}
-          style={styles.modalOverlay}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
         >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={handleDialogClose}
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            exiting={FadeOut.duration(250)}
+            style={styles.modalOverlay}
           >
+            <TouchableOpacity
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={handleDialogClose}
+            >
               <Animated.View
                 entering={ZoomIn.springify().damping(25).stiffness(350).mass(0.8)}
                 exiting={ZoomOut.springify().damping(30).stiffness(400)}
                 style={styles.dialogContainer}
               >
-              <BlurView
-                intensity={120}
-                tint="dark"
-                style={styles.dialogBlur}
-              >
-                <View style={styles.dialogContent}>
+                <BlurView
+                  intensity={120}
+                  tint="dark"
+                  style={styles.dialogBlur}
+                >
+                  <View style={styles.dialogContent}>
                     <Animated.View 
                       entering={FadeIn.delay(200).duration(400)}
                       style={styles.dialogHeader}
                     >
-                    <ThemedText style={styles.dialogTitle}>Add Link</ThemedText>
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={handleDialogClose}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="X" size={20} color="rgba(255, 255, 255, 0.8)" />
-                    </TouchableOpacity>
-                  </Animated.View>
-                  
-                  <Animated.View 
-                    entering={FadeIn.delay(300).duration(500)}
-                    style={styles.dialogBody}
-                  >
-                    <ThemedText style={styles.dialogSubtitle}>
-                      Enter an article or podcast link
-                    </ThemedText>
-                    
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder="https://example.com/podcast.mp3"
-                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                        value={linkInput}
-                        onChangeText={setLinkInput}
-                        autoFocus
-                        keyboardType="url"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                    </View>
-                    
-                    <Animated.View 
-                      entering={FadeIn.delay(500).duration(400)}
-                      style={styles.buttonContainer}
-                    >
-                      <TouchableOpacity 
-                        style={[styles.actionButton, styles.cancelButton]}
+                      <ThemedText style={styles.dialogTitle}>Add Link</ThemedText>
+                      <TouchableOpacity
+                        style={styles.closeButton}
                         onPress={handleDialogClose}
-                        activeOpacity={0.8}
+                        activeOpacity={0.7}
                       >
-                        <BlurView intensity={20} tint="dark" style={styles.buttonBlur}>
-                          <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
-                        </BlurView>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={[styles.actionButton, styles.addButton]}
-                        onPress={() => {
-                          if (linkInput.trim()) {
-                            // TODO: Handle adding the link
-                            console.log('Adding link:', linkInput);
-                            handleDialogClose();
-                          }
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <BlurView intensity={30} tint="dark" style={styles.buttonBlur}>
-                          <ThemedText style={styles.addButtonText}>Add</ThemedText>
-                        </BlurView>
+                        <Icon name="X" size={20} color="rgba(255, 255, 255, 0.8)" />
                       </TouchableOpacity>
                     </Animated.View>
-                  </Animated.View>
-                </View>
-              </BlurView>
-            </Animated.View>
-          </TouchableOpacity>
-        </Animated.View>
+                    
+                    <Animated.View 
+                      entering={FadeIn.delay(300).duration(500)}
+                      style={styles.dialogBody}
+                    >
+                      <ThemedText style={styles.dialogSubtitle}>
+                        Enter an article or podcast link
+                      </ThemedText>
+                      
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          style={styles.textInput}
+                          placeholder="https://example.com/podcast.mp3"
+                          placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                          value={linkInput}
+                          onChangeText={setLinkInput}
+                          autoFocus
+                          keyboardType="url"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                      </View>
+                      
+                      <Animated.View 
+                        entering={FadeIn.delay(500).duration(400)}
+                        style={styles.buttonContainer}
+                      >
+                        <TouchableOpacity 
+                          style={[styles.actionButton, styles.cancelButton]}
+                          onPress={handleDialogClose}
+                          activeOpacity={0.8}
+                        >
+                          <BlurView intensity={20} tint="dark" style={styles.buttonBlur}>
+                            <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                          </BlurView>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={[styles.actionButton, styles.addButton]}
+                          onPress={() => {
+                            if (linkInput.trim()) {
+                              console.log('Adding link:', linkInput);
+                              handleDialogClose();
+                            }
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <BlurView intensity={30} tint="dark" style={styles.buttonBlur}>
+                            <ThemedText style={styles.addButtonText}>Add</ThemedText>
+                          </BlurView>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    </Animated.View>
+                  </View>
+                </BlurView>
+              </Animated.View>
+            </TouchableOpacity>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
-      
     </View>
   );
 }
@@ -303,10 +366,95 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  miniPlayerContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: Platform.OS === 'ios' ? 110 : 95,
+    height: 64,
+    zIndex: 1000,
+  },
+  miniPlayerBlur: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(28, 28, 30, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  miniPlayer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  miniPlayerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  miniPlayerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  miniPlayerImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  miniPlayerPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  miniPlayerInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  miniPlayerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  miniPlayerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500',
+  },
+  miniPlayerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  miniPlayerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
   fabWrapper: {
     position: 'absolute',
     right: 28,
-    bottom: Platform.OS === 'ios' ? 110 : 95, // slightly above nav bar
+    bottom: Platform.OS === 'ios' ? 110 : 95,
+  },
+  fabWrapperWithPlayer: {
+    bottom: Platform.OS === 'ios' ? 184 : 169, // Move up when mini player is visible
   },
   fabGlass: {
     borderRadius: 28,

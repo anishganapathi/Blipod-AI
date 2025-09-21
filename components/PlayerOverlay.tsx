@@ -16,8 +16,7 @@ import { usePlayer } from '@/context/PlayerContext';
 const { height, width } = Dimensions.get('window');
 
 export default function PlayerOverlay() {
-  const { isVisible, track, isPlaying, toggle, close, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
-  const [isLiked, setIsLiked] = useState(false);
+  const { isVisible, track, isPlaying, toggle, hideFullPlayer, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [isDraggingModal, setIsDraggingModal] = useState(false);
   const [sliderValue, setSliderValue] = useState(0);
@@ -37,15 +36,11 @@ export default function PlayerOverlay() {
   const handleSeek = (position: number) => {
     if (durationMs && seekTo) {
       const seekTime = Math.floor(position * durationMs);
-      console.log('Seeking to:', seekTime);
       seekTo(seekTime);
     }
   };
 
-
-
   const open = () => {
-    // Set initial position and start animation immediately
     translateY.value = height;
     modalScale.value = 0.95;
     
@@ -63,18 +58,17 @@ export default function PlayerOverlay() {
 
   const dismiss = () => {
     translateY.value = withTiming(height, { duration: 350 }, (finished) => {
-      if (finished) runOnJS(close)();
+      if (finished) runOnJS(hideFullPlayer)();
     });
   };
 
   React.useEffect(() => {
     if (isVisible) {
-      // Start animation immediately without delay
       open();
     }
   }, [isVisible]);
 
-  // Main modal pan responder - handles drag to dismiss from anywhere
+  // Main modal pan responder - handles drag to dismiss
   const modalPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => {
@@ -91,7 +85,6 @@ export default function PlayerOverlay() {
         const newY = Math.max(0, gestureState.dy);
         translateY.value = newY;
         
-        // Smooth scale effect while dragging
         const scale = 1 - (newY / height) * 0.05;
         modalScale.value = Math.max(0.95, scale);
       },
@@ -108,12 +101,11 @@ export default function PlayerOverlay() {
     })
   ).current;
 
-  // Enhanced slider pan responder - handles both dragging and clicking
+  // Slider pan responder
   const sliderPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Only become move responder if we're actually moving significantly
         return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
       },
       onPanResponderGrant: (evt) => {
@@ -123,11 +115,7 @@ export default function PlayerOverlay() {
         
         setIsDraggingSlider(true);
         setSliderValue(progress);
-        
-        // Fast scale animation for immediate feedback
         sliderThumbScale.value = withTiming(1.4, { duration: 100 });
-        
-        // Immediately seek to position
         handleSeek(progress);
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -136,16 +124,12 @@ export default function PlayerOverlay() {
         const progress = Math.max(0, Math.min(1, locationX / containerWidth));
         
         setSliderValue(progress);
-        // Continuously seek during drag for smooth scrubbing
         handleSeek(progress);
       },
       onPanResponderRelease: (evt, gestureState) => {
         setIsDraggingSlider(false);
-        
-        // Quick scale back animation
         sliderThumbScale.value = withTiming(1, { duration: 150 });
         
-        // Final seek to ensure we're at the exact position
         const { locationX } = evt.nativeEvent;
         const containerWidth = width - 56;
         const finalProgress = Math.max(0, Math.min(1, locationX / containerWidth));
@@ -162,7 +146,6 @@ export default function PlayerOverlay() {
     toggle();
   };
 
-  // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: translateY.value },
@@ -195,7 +178,7 @@ export default function PlayerOverlay() {
               </TouchableOpacity>
               <View style={styles.headerCenter}>
                 <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
-                <Text style={styles.headerSubtitle}>Starboy Remix</Text>
+                <Text style={styles.headerSubtitle}>Recently Saved</Text>
               </View>
             </View>
 
@@ -304,7 +287,6 @@ export default function PlayerOverlay() {
               <TouchableOpacity style={styles.bottomBtn} onPress={() => setRate(nextRate(rate))}>
                 <Text style={styles.rateText}>{rate}x</Text>
               </TouchableOpacity>
-              
             </View>
           </LinearGradient>
         </Animated.View>
@@ -370,30 +352,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chevronDown: {
-    width: 12,
-    height: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chevronLine: {
-    position: 'absolute',
-    width: 6,
-    height: 1.5,
-    backgroundColor: '#fff',
-    borderRadius: 1,
-  },
-  moreIcon: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: 14,
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#fff',
-  },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
@@ -409,16 +367,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  dragIndicator: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  dragBar: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   coverContainer: {
     alignItems: 'center',
@@ -559,12 +507,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 20,
   },
-  skipBar: {
-    width: 2,
-    height: 20,
-    backgroundColor: '#fff',
-    borderRadius: 1,
-  },
   skipTriangle: {
     width: 0,
     height: 0,
@@ -644,45 +586,6 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     height: 12,
   },
-  heartContainer: {
-    width: 18,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heartShape: {
-    width: 12,
-    height: 11,
-    position: 'relative',
-    transform: [{ rotate: '45deg' }],
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderRadius: 6,
-  },
-  heartLeft: {
-    position: 'absolute',
-    left: -6,
-    top: -3,
-    width: 6,
-    height: 9,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    transform: [{ rotate: '-45deg' }],
-    borderWidth: 1.5,
-    borderColor: 'inherit',
-  },
-  heartRight: {
-    position: 'absolute',
-    right: -6,
-    top: -3,
-    width: 6,
-    height: 9,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    transform: [{ rotate: '45deg' }],
-    borderWidth: 1.5,
-    borderColor: 'inherit',
-  },
   rateText: {
     color: '#fff',
     fontSize: 16,
@@ -692,10 +595,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
-  },
-  bottomIcon: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
   },
 });
