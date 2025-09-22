@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
 import { BlurView } from "expo-blur";
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Animated, {
   FadeInDown,
   FadeInRight,
@@ -123,9 +124,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ item, index }) => {
   );
 };
 
-export default function BrowsePage(): React.JSX.Element {
+export default function BrowsePage({ focusSearch = false }: { focusSearch?: boolean }): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCategories, setFilteredCategories] = useState(CATEGORIES);
+  const searchInputRef = useRef<TextInput>(null);
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
@@ -140,6 +142,18 @@ export default function BrowsePage(): React.JSX.Element {
       setFilteredCategories(filtered);
     }
   };
+
+  // Focus search input when focusSearch prop is true
+  React.useEffect(() => {
+    if (focusSearch) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [focusSearch]);
 
   return (
     <View style={styles.container}>
@@ -159,6 +173,7 @@ export default function BrowsePage(): React.JSX.Element {
               <View style={styles.searchContent}>
                 <ThemedText style={styles.searchIcon}>🔍</ThemedText>
                 <TextInput
+                  ref={searchInputRef}
                   style={styles.searchInput}
                   value={searchQuery}
                   onChangeText={handleSearchChange}

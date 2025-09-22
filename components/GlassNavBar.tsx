@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { KeyboardAvoidingView, StyleSheet, TouchableOpacity, View, Platform, Modal, Dimensions, TextInput, Image } from "react-native";
 import { BlurView } from "expo-blur";
 import Icon from "./LucideIcons";
@@ -29,7 +29,7 @@ import BrowsePage from "@/app/browse";
 interface NavItem {
   icon: string;
   label: string;
-  screen: React.ComponentType;
+  screen: React.ComponentType<any>;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -45,6 +45,7 @@ export default function GlassNavBar(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(0);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [linkInput, setLinkInput] = useState('');
+  const [browseFocusSearch, setBrowseFocusSearch] = useState(false);
   const { track, isPlaying, toggle, showFullPlayer, close } = usePlayer();
 
   // FAB animation values
@@ -58,6 +59,12 @@ export default function GlassNavBar(): React.JSX.Element {
   const miniPlayerOpacity = useSharedValue(1);
   const miniPlayerTranslateY = useSharedValue(track ? 0 : 100);
   const miniPlayerVisible = useSharedValue(track ? 1 : 0);
+
+  // Function to navigate to Browse tab with search focus
+  const navigateToBrowse = (focusSearch: boolean = false) => {
+    setBrowseFocusSearch(focusSearch);
+    setActiveTab(2); // Browse tab is at index 2
+  };
 
   // Update mini player reveal animation when track changes
   React.useEffect(() => {
@@ -85,6 +92,13 @@ export default function GlassNavBar(): React.JSX.Element {
       });
     }
   }, [track]);
+
+  // Reset browse focus search when tab changes
+  React.useEffect(() => {
+    if (activeTab !== 2) {
+      setBrowseFocusSearch(false);
+    }
+  }, [activeTab]);
 
   const handleFABPress = (): void => {
     fabScale.value = withSequence(
@@ -191,7 +205,15 @@ export default function GlassNavBar(): React.JSX.Element {
         >
           {(() => {
             const ActiveScreen = NAV_ITEMS[activeTab].screen;
-            return <ActiveScreen />;
+            
+            // Pass props based on the active screen
+            if (activeTab === 0) { // Home screen
+              return <ActiveScreen onNavigateToBrowse={navigateToBrowse} />;
+            } else if (activeTab === 2) { // Browse screen
+              return <ActiveScreen focusSearch={browseFocusSearch} />;
+            } else {
+              return <ActiveScreen />;
+            }
           })()}
         </Animated.View>
       </View>

@@ -12,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePlayer } from '@/context/PlayerContext';
-
 interface PodcastCard {
   id: string;
   title: string;
@@ -29,8 +28,18 @@ interface Episode {
   thumbnail: string;
 }
 
-const Homepage = () => {
+interface HomepageProps {
+  onNavigateToBrowse?: (focusSearch?: boolean) => void;
+}
+
+const Homepage = ({ onNavigateToBrowse }: HomepageProps) => {
   const { open } = usePlayer();
+
+  const handleSearchPress = () => {
+    // Navigate to Browse tab and focus on search
+    onNavigateToBrowse?.(true);
+  };
+
   const podcasts: PodcastCard[] = [
     {
       id: '1',
@@ -154,7 +163,11 @@ const Homepage = () => {
                 </View>
               </View>
             </View>
-            <TouchableOpacity style={styles.searchButton}>
+            <TouchableOpacity 
+              style={styles.searchButton} 
+              onPress={handleSearchPress}
+              activeOpacity={0.7}
+            >
               <MaterialIcons name="search" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -363,7 +376,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    marginRight: 12,
+    marginRight: 20, // Increased spacing between thumbnail and text
   },
   episodeContent: {
     flex: 1,
