@@ -104,19 +104,72 @@ export default function ProfilePage() {
     </Animated.View>
   );
 
-  const ArchiveSection = () => (
+  const ShareSection = () => (
     <Animated.View
       style={[
-        styles.archiveContainer,
+        styles.menuContainer,
         {
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
         },
       ]}
     >
-      <BlurView style={styles.archiveBlur} intensity={20} tint="dark">
-        <TouchableOpacity style={styles.archiveContent}>
-          <ThemedText style={styles.archiveText}>Archive</ThemedText>
+      <BlurView style={styles.menuBlur} intensity={20} tint="dark">
+        <TouchableOpacity style={styles.menuContent}>
+          <View style={styles.menuLeft}>
+            <View style={styles.menuIconContainer}>
+              <MaterialIcons name="share" size={20} color="#FFA500" />
+            </View>
+            <ThemedText style={styles.menuText}>Share</ThemedText>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color="rgba(255, 255, 255, 0.6)" />
+        </TouchableOpacity>
+      </BlurView>
+    </Animated.View>
+  );
+
+  const ArchiveSection = () => (
+    <Animated.View
+      style={[
+        styles.menuContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <BlurView style={styles.menuBlur} intensity={20} tint="dark">
+        <TouchableOpacity style={styles.menuContent}>
+          <View style={styles.menuLeft}>
+            <View style={styles.menuIconContainer}>
+              <MaterialIcons name="archive" size={20} color="#FFA500" />
+            </View>
+            <ThemedText style={styles.menuText}>Archive</ThemedText>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color="rgba(255, 255, 255, 0.6)" />
+        </TouchableOpacity>
+      </BlurView>
+    </Animated.View>
+  );
+
+  const MoreSection = () => (
+    <Animated.View
+      style={[
+        styles.menuContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <BlurView style={styles.menuBlur} intensity={20} tint="dark">
+        <TouchableOpacity style={styles.menuContent}>
+          <View style={styles.menuLeft}>
+            <View style={styles.menuIconContainer}>
+              <MaterialIcons name="more-horiz" size={20} color="#FFA500" />
+            </View>
+            <ThemedText style={styles.menuText}>More</ThemedText>
+          </View>
           <MaterialIcons name="chevron-right" size={24} color="rgba(255, 255, 255, 0.6)" />
         </TouchableOpacity>
       </BlurView>
@@ -131,18 +184,6 @@ export default function ProfilePage() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.headerButton}>
-              <MaterialIcons name="share" size={20} color="rgba(255, 255, 255, 0.8)" />
-            </TouchableOpacity>
-            
-            <ThemedText style={styles.timeText}>6:46</ThemedText>
-            
-            <TouchableOpacity style={styles.headerButton}>
-              <MaterialIcons name="more-horiz" size={24} color="rgba(255, 255, 255, 0.8)" />
-            </TouchableOpacity>
-          </View>
-
           <View style={styles.mainContent}>
             <ProfileIcon />
             
@@ -158,7 +199,12 @@ export default function ProfilePage() {
             </Animated.View>
 
             <StreakWidget />
-            <ArchiveSection />
+            
+            <View style={styles.menuSectionsContainer}>
+              <ShareSection />
+              <ArchiveSection />
+              <MoreSection />
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -185,11 +231,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 0 : 40,
-    paddingBottom: 20,
+    paddingBottom: 30,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: -0.5,
   },
   headerButton: {
     width: 44,
@@ -244,7 +296,7 @@ const styles = StyleSheet.create({
   },
   streakContainer: {
     width: width - 40,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   streakBlur: {
     borderRadius: 20,
@@ -309,24 +361,42 @@ const styles = StyleSheet.create({
   dayEmoji: {
     fontSize: 16,
   },
-  archiveContainer: {
-    width: width - 40,
-    marginTop: 20,
+  menuSectionsContainer: {
+    width: '100%',
+    gap: 12,
   },
-  archiveBlur: {
+  menuContainer: {
+    width: '100%',
+  },
+  menuBlur: {
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: 'rgba(28, 28, 30, 0.4)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  archiveContent: {
+  menuContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
   },
-  archiveText: {
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 165, 0, 0.2)',
+  },
+  menuText: {
     fontSize: 18,
     fontWeight: '500',
     color: '#fff',
