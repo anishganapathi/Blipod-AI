@@ -30,14 +30,25 @@ interface Episode {
 
 interface HomepageProps {
   onNavigateToBrowse?: (focusSearch?: boolean) => void;
+  onNavigateToAudio?: () => void;
 }
 
-const Homepage = ({ onNavigateToBrowse }: HomepageProps) => {
+const Homepage = ({ onNavigateToBrowse, onNavigateToAudio }: HomepageProps) => {
   const { open } = usePlayer();
 
   const handleSearchPress = () => {
     // Navigate to Browse tab and focus on search
     onNavigateToBrowse?.(true);
+  };
+
+  const handleRecentlySavedSeeAll = () => {
+    // Navigate to Audio tab
+    onNavigateToAudio?.();
+  };
+
+  const handleForYouSeeAll = () => {
+    // Navigate to Browse tab
+    onNavigateToBrowse?.();
   };
 
   const podcasts: PodcastCard[] = [
@@ -176,7 +187,7 @@ const Homepage = ({ onNavigateToBrowse }: HomepageProps) => {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>For you</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleForYouSeeAll}>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
             </View>
@@ -195,7 +206,7 @@ const Homepage = ({ onNavigateToBrowse }: HomepageProps) => {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recently Saved</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleRecentlySavedSeeAll}>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
             </View>

@@ -62,6 +62,11 @@ export default function GlassNavBar(): React.JSX.Element {
     setActiveTab(2); // Browse tab is at index 2
   };
 
+  // Function to navigate to Audio tab
+  const navigateToAudio = () => {
+    setActiveTab(1); // Audio tab is at index 1
+  };
+
   // Update mini player reveal animation when track changes
   React.useEffect(() => {
     if (track) {
@@ -179,7 +184,7 @@ export default function GlassNavBar(): React.JSX.Element {
             
             // Pass props based on the active screen
             if (activeTab === 0) { // Home screen
-              return <ActiveScreen onNavigateToBrowse={navigateToBrowse} />;
+              return <ActiveScreen onNavigateToBrowse={navigateToBrowse} onNavigateToAudio={navigateToAudio} />;
             } else if (activeTab === 2) { // Browse screen
               return <ActiveScreen focusSearch={browseFocusSearch} />;
             } else {
@@ -365,16 +370,6 @@ export default function GlassNavBar(): React.JSX.Element {
                       </View>
                       
                       <View style={styles.buttonContainer}>
-                        <TouchableOpacity 
-                          style={[styles.actionButton, styles.cancelButton]}
-                          onPress={handleDialogClose}
-                          activeOpacity={0.8}
-                        >
-                          <BlurView intensity={20} tint="dark" style={styles.buttonBlur}>
-                            <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
-                          </BlurView>
-                        </TouchableOpacity>
-                        
                         <TouchableOpacity 
                           style={[styles.actionButton, styles.addButton]}
                           onPress={() => {
@@ -684,3 +679,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+                
