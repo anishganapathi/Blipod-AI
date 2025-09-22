@@ -85,6 +85,13 @@ const POPULAR_SINGLES: SingleItem[] = [
     status: "Trending",
     image: "https://plus.unsplash.com/premium_photo-1681503973674-ca910d68dbff?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
+  {
+    id: "5",
+    title: "Rolling in the deep",
+    year: "2023",
+    status: "Trending",
+    image: "https://images.unsplash.com/photo-1700720711254-602cb6b8468d?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
 ];
 
 // Album Card
