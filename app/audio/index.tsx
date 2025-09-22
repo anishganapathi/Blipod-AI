@@ -5,7 +5,6 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView,
-  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
@@ -88,7 +87,7 @@ const POPULAR_SINGLES: SingleItem[] = [
   },
 ];
 
-// Define components inside the main component or outside
+// Album Card
 const AlbumCard: React.FC<{ item: AlbumItem; index: number }> = ({ item }) => {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
@@ -111,6 +110,7 @@ const AlbumCard: React.FC<{ item: AlbumItem; index: number }> = ({ item }) => {
   );
 };
 
+// Single Row
 const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
@@ -138,6 +138,7 @@ const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
   );
 };
 
+// Main Page
 export default function AudioPage(): React.JSX.Element {
   return (
     <View style={styles.container}>
@@ -147,11 +148,8 @@ export default function AudioPage(): React.JSX.Element {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Hero Section */}
-          <Animated.View
-            style={styles.heroSection}
-            entering={FadeInUp.delay(100).springify().damping(20).stiffness(300)}
-          >
+          {/* Hero Section (no animation for bg image, but text + play button animate) */}
+          <View style={styles.heroSection}>
             <Image
               source={{
                 uri: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=800&auto=format&fit=crop",
@@ -163,28 +161,33 @@ export default function AudioPage(): React.JSX.Element {
               style={styles.heroGradient}
             />
             <View style={styles.heroContent}>
-  <ThemedText style={styles.artistName}>Audio</ThemedText>
-  <Animated.View
-    entering={FadeInUp.delay(200).springify().damping(20).stiffness(300)}
-  >
-    {/* Play Button */}
-    <TouchableOpacity
-      style={styles.playButton}
-      activeOpacity={0.8}
-      onPress={() => console.log("Play pressed")}
-    >
-      <MaterialIcons name="play-arrow" size={28} color="#000" />
-    </TouchableOpacity>
-  </Animated.View>
-</View>
-          </Animated.View>
+              {/* Animate Audio text */}
+              <Animated.View
+                entering={FadeInUp.delay(150).springify().damping(20).stiffness(300)}
+              >
+                <ThemedText style={styles.artistName}>Audio</ThemedText>
+              </Animated.View>
+
+              {/* Animate Play Button */}
+              <Animated.View
+                entering={FadeInUp.delay(300).springify().damping(20).stiffness(300)}
+              >
+                <TouchableOpacity
+                  style={styles.playButton}
+                  activeOpacity={0.8}
+                  onPress={() => console.log("Play pressed")}
+                >
+                  <MaterialIcons name="play-arrow" size={28} color="#000" />
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </View>
 
           {/* Popular Singles Section */}
           <Animated.View
             style={styles.section}
             entering={FadeInUp.delay(700).springify().damping(20).stiffness(300)}
           >
-        
             <View style={styles.singlesList}>
               {POPULAR_SINGLES.map((single, index) => (
                 <Animated.View
@@ -211,21 +214,12 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
 
-  statusBarOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-    zIndex: 10,
-  },
-
   heroSection: {
     height: 400,
     position: "relative",
     justifyContent: "flex-end",
     overflow: "hidden",
-    marginTop: -50, // Pull up to fill the screen
+    marginTop: -50,
   },
   heroImage: {
     position: "absolute",
@@ -243,44 +237,36 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-heroContent: { 
-  padding: 24, 
-  paddingBottom: 40, 
-  zIndex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between"
-},
-artistName: {
-  fontSize: 48,
-  fontWeight: "800",
-  color: "#fff",
-  marginBottom: 0, // Remove bottom margin since they're now side by side
-  letterSpacing: -1,
-  textShadowColor: "rgba(0,0,0,0.7)",
-  textShadowOffset: { width: 0, height: 2 },
-  textShadowRadius: 4,
-  flex: 1, // Allow text to take available space
-},
-
+  heroContent: { 
+    padding: 24, 
+    paddingBottom: 40, 
+    zIndex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  artistName: {
+    fontSize: 48,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: -1,
+    textShadowColor: "rgba(0,0,0,0.7)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    flex: 1,
+  },
   playButton: {
-  width: 56,
-  height: 56,
-  borderRadius: 28, 
-  backgroundColor: "#FFA500",
-  justifyContent: "center",
-  alignItems: "center",
-  shadowColor: "#FFA500",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 8,
-},
-  playText: {
-    color: "#000",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 6,
+    width: 56,
+    height: 56,
+    borderRadius: 28, 
+    backgroundColor: "#FFA500",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#FFA500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   section: { paddingHorizontal: 24, marginBottom: 32 },
