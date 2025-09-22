@@ -44,7 +44,7 @@ export default function GlassNavBar(): React.JSX.Element {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [linkInput, setLinkInput] = useState('');
   const [browseFocusSearch, setBrowseFocusSearch] = useState(false);
-  const { track, isPlaying, toggle, showFullPlayer, close } = usePlayer();
+  const { track, isPlaying, isLoading, toggle, showFullPlayer, close } = usePlayer();
 
   // FAB animation values
   const fabScale = useSharedValue(1);
@@ -235,8 +235,11 @@ export default function GlassNavBar(): React.JSX.Element {
                       toggle();
                     }}
                     activeOpacity={0.7}
+                    disabled={isLoading}
                   >
-                    {isPlaying ? (
+                    {isLoading ? (
+                      <MaterialIcons name="more-horiz" size={20} color="rgba(255,255,255,0.6)" />
+                    ) : isPlaying ? (
                       <MaterialIcons name="pause" size={20} color="#fff" />
                     ) : (
                       <MaterialIcons name="play-arrow" size={20} color="#fff" />
@@ -679,4 +682,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-                

@@ -15,7 +15,7 @@ import { usePlayer } from '@/context/PlayerContext';
 const { height, width } = Dimensions.get('window');
 
 export default function PlayerOverlay() {
-  const { isVisible, track, isPlaying, toggle, hideFullPlayer, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
+  const { isVisible, track, isPlaying, isLoading, toggle, hideFullPlayer, positionMs, durationMs, skipBy, rate, setRate, seekTo } = usePlayer();
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [tempSliderValue, setTempSliderValue] = useState(0);
 
@@ -67,7 +67,7 @@ export default function PlayerOverlay() {
   }, [isVisible]);
 
   const handleSliderPress = (evt: any) => {
-    if (!durationMs) return;
+    if (!durationMs || isLoading) return;
     
     const { locationX } = evt.nativeEvent;
     const containerWidth = width - 56;
@@ -83,7 +83,7 @@ export default function PlayerOverlay() {
   };
 
   const handleSliderMove = (evt: any) => {
-    if (!durationMs || !isDraggingSlider) return;
+    if (!durationMs || !isDraggingSlider || isLoading) return;
     
     const { locationX } = evt.nativeEvent;
     const containerWidth = width - 56;
@@ -94,7 +94,7 @@ export default function PlayerOverlay() {
   };
 
   const handleSliderRelease = () => {
-    if (!durationMs) return;
+    if (!durationMs || isLoading) return;
     
     setIsDraggingSlider(false);
     sliderThumbScale.value = withSpring(1, { 
@@ -104,6 +104,8 @@ export default function PlayerOverlay() {
   };
 
   const handlePlayPress = () => {
+    if (isLoading) return;
+    
     playButtonScale.value = withSequence(
       withSpring(0.9, { damping: 15, stiffness: 400 }),
       withSpring(1, { damping: 20, stiffness: 300 })
@@ -145,7 +147,9 @@ export default function PlayerOverlay() {
                 {/* Empty space for balance */}
               </View>
               <View style={styles.headerCenter}>
-                <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
+                <Text style={styles.headerTitle}>
+                  {isLoading ? "LOADING..." : "PLAYING FROM PLAYLIST"}
+                </Text>
                 <Text style={styles.headerSubtitle}>Recently Saved</Text>
               </View>
               <TouchableOpacity style={styles.headerBtn} onPress={dismiss}>
@@ -155,17 +159,22 @@ export default function PlayerOverlay() {
 
             {/* Album Art */}
             <View style={styles.coverContainer}>
-              <View style={styles.coverWrap}>
+              <View style={[styles.coverWrap, isLoading && styles.loadingCover]}>
                 {track.localImageRequire ? (
-                  <Image source={track.localImageRequire} style={styles.cover} />
+                  <Image source={track.localImageRequire} style={[styles.cover, isLoading && styles.loadingImage]} />
                 ) : track.image ? (
-                  <Image source={{ uri: track.image }} style={styles.cover} />
+                  <Image source={{ uri: track.image }} style={[styles.cover, isLoading && styles.loadingImage]} />
                 ) : (
                   <View style={styles.placeholderCover}>
                     <View style={styles.musicNote}>
                       <View style={styles.noteHead} />
                       <View style={styles.noteStem} />
                     </View>
+                  </View>
+                )}
+                {isLoading && (
+                  <View style={styles.loadingOverlay}>
+                    <View style={styles.loadingSpinner} />
                   </View>
                 )}
               </View>
@@ -177,10 +186,13 @@ export default function PlayerOverlay() {
               {track.publisher && (
                 <Text style={styles.artist}>{track.publisher}</Text>
               )}
+              {isLoading && (
+                <Text style={styles.loadingText}>Loading audio...</Text>
+              )}
             </View>
 
             {/* Progress Slider */}
-            <View style={styles.progressSection}>
+            <View style={[styles.progressSection, isLoading && styles.disabledSection]}>
               <View 
                 style={styles.sliderContainer}
                 onTouchStart={handleSliderPress}
@@ -200,7 +212,8 @@ export default function PlayerOverlay() {
                       { 
                         left: `${progressPct * 100}%`,
                       },
-                      sliderThumbStyle
+                      sliderThumbStyle,
+                      isLoading && styles.disabledThumb
                     ]} 
                   />
                 </View>
@@ -218,7 +231,11 @@ export default function PlayerOverlay() {
 
             {/* Controls */}
             <View style={styles.controlsRow}>
-              <TouchableOpacity style={styles.controlBtn} onPress={() => skipBy(-15000)}>
+              <TouchableOpacity 
+                style={[styles.controlBtn, isLoading && styles.disabledBtn]} 
+                onPress={() => skipBy(-15000)}
+                disabled={isLoading}
+              >
                 <View style={styles.skipBackIcon}>
                   <View style={styles.skipTriangle} />
                   <View style={styles.skipTriangle} />
@@ -226,8 +243,18 @@ export default function PlayerOverlay() {
               </TouchableOpacity>
               
               <Animated.View style={playButtonStyle}>
-                <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
-                  {isPlaying ? (
+                <TouchableOpacity 
+                  style={[styles.playButton, isLoading && styles.loadingPlayButton]} 
+                  onPress={handlePlayPress}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <View style={styles.loadingDots}>
+                      <View style={[styles.loadingDot, styles.dot1]} />
+                      <View style={[styles.loadingDot, styles.dot2]} />
+                      <View style={[styles.loadingDot, styles.dot3]} />
+                    </View>
+                  ) : isPlaying ? (
                     <View style={styles.pauseIcon}>
                       <View style={styles.pauseBar} />
                       <View style={styles.pauseBar} />
@@ -238,7 +265,11 @@ export default function PlayerOverlay() {
                 </TouchableOpacity>
               </Animated.View>
               
-              <TouchableOpacity style={styles.controlBtn} onPress={() => skipBy(30000)}>
+              <TouchableOpacity 
+                style={[styles.controlBtn, isLoading && styles.disabledBtn]} 
+                onPress={() => skipBy(30000)}
+                disabled={isLoading}
+              >
                 <View style={styles.skipForwardIcon}>
                   <View style={styles.skipTriangle} />
                   <View style={styles.skipTriangle} />
@@ -248,7 +279,10 @@ export default function PlayerOverlay() {
 
             {/* Bottom Controls */}
             <View style={styles.bottomControls}>
-              <TouchableOpacity style={styles.bottomBtn}>
+              <TouchableOpacity 
+                style={[styles.bottomBtn, isLoading && styles.disabledBtn]}
+                disabled={isLoading}
+              >
                 <View style={styles.speedIcon}>
                   <View style={styles.speedLine} />
                   <View style={styles.speedLine} />
@@ -256,7 +290,11 @@ export default function PlayerOverlay() {
                 </View>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.bottomBtn} onPress={() => setRate(nextRate(rate))}>
+              <TouchableOpacity 
+                style={[styles.bottomBtn, isLoading && styles.disabledBtn]} 
+                onPress={() => setRate(nextRate(rate))}
+                disabled={isLoading}
+              >
                 <Text style={styles.rateText}>{rate}x</Text>
               </TouchableOpacity>
             </View>
@@ -360,10 +398,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 25,
     elevation: 15,
+    position: 'relative',
+  },
+  loadingCover: {
+    opacity: 0.7,
   },
   cover: {
     width: '100%',
     height: '100%',
+  },
+  loadingImage: {
+    opacity: 0.6,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderTopColor: '#fff',
   },
   placeholderCover: {
     width: '100%',
@@ -415,9 +478,20 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
   },
+  loadingText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
   progressSection: {
     paddingHorizontal: 20,
     marginBottom: 30,
+  },
+  disabledSection: {
+    opacity: 0.5,
   },
   sliderContainer: {
     paddingVertical: 20,
@@ -448,6 +522,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  disabledThumb: {
+    opacity: 0.5,
+  },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -470,6 +547,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 25,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledBtn: {
+    opacity: 0.3,
   },
   skipBackIcon: {
     flexDirection: 'row',
@@ -512,6 +592,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  loadingPlayButton: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
   playTriangle: {
     width: 0,
     height: 0,
@@ -538,6 +621,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 2,
     marginHorizontal: 2,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#000',
+    marginHorizontal: 2,
+  },
+  dot1: {
+    opacity: 0.3,
+  },
+  dot2: {
+    opacity: 0.6,
+  },
+  dot3: {
+    opacity: 1,
   },
   bottomControls: {
     flexDirection: 'row',

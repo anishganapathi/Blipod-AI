@@ -15,6 +15,7 @@ export type PlayerTrack = {
 type PlayerContextValue = {
   isVisible: boolean;
   isPlaying: boolean;
+  isLoading: boolean;
   positionMs: number;
   durationMs: number;
   rate: number;
@@ -41,6 +42,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isVisible, setIsVisible] = useState(false); // Full player overlay visibility
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [rate, setPlaybackRate] = useState(1.0);
@@ -72,20 +74,36 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const open = useCallback(async (next: PlayerTrack) => {
     try {
-      // Stop and unload any existing audio
-      await unload();
-      
-      // Reset states
+      // Immediately update UI state for instant feedback
+      setTrack(next);
+      setIsLoading(true);
       setIsPlaying(false);
       setPositionMs(0);
       setDurationMs(0);
       
-      // Load new track
+      // Stop and unload any existing audio in background
+      await unload();
+      
+      // Create and load new track with optimized settings
       const { sound } = await Audio.Sound.createAsync(
         { uri: next.url },
-        { shouldPlay: true, rate },
+        { 
+          shouldPlay: true, 
+          rate,
+          progressUpdateIntervalMillis: 500, // Update every 500ms instead of default
+          positionMillis: 0,
+        },
         (status: AVPlaybackStatus) => {
-          if (!status.isLoaded) return;
+          if (!status.isLoaded) {
+            if (status.error) {
+              console.error('Audio loading error:', status.error);
+              setIsLoading(false);
+            }
+            return;
+          }
+          
+          // Update states as audio loads and plays
+          setIsLoading(false);
           setIsPlaying(status.isPlaying ?? false);
           setPositionMs(status.positionMillis ?? 0);
           setDurationMs(status.durationMillis ?? 0);
@@ -93,11 +111,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       );
       
       soundRef.current = sound;
-      setTrack(next);
-      setIsPlaying(true);
+      
+      // Start playback immediately after creation
+      try {
+        await sound.playAsync();
+        setIsPlaying(true);
+        setIsLoading(false);
+      } catch (playError) {
+        console.error('Error starting playback:', playError);
+        setIsLoading(false);
+      }
       
     } catch (error) {
       console.error('Error loading track:', error);
+      setIsLoading(false);
+      setIsPlaying(false);
     }
   }, [rate, unload]);
 
@@ -110,6 +138,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setTrack(undefined);
       setIsVisible(false);
       setIsPlaying(false);
+      setIsLoading(false);
       setPositionMs(0);
       setDurationMs(0);
     } catch (error) {
@@ -122,25 +151,39 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const sound = soundRef.current;
       if (!sound) return;
       
+      // Optimistic UI update for instant feedback
+      const currentlyPlaying = isPlaying;
+      setIsPlaying(!currentlyPlaying);
+      
       const status = await sound.getStatusAsync();
-      if (!('isLoaded' in status) || !status.isLoaded) return;
+      if (!('isLoaded' in status) || !status.isLoaded) {
+        // Revert optimistic update if sound isn't loaded
+        setIsPlaying(currentlyPlaying);
+        return;
+      }
 
       if (status.isPlaying) {
         await sound.pauseAsync();
-        setIsPlaying(false);
+        // State already updated optimistically
       } else {
         await sound.playAsync();
-        setIsPlaying(true);
+        // State already updated optimistically
       }
     } catch (error) {
       console.error('Error toggling playback:', error);
+      // Revert optimistic update on error
+      setIsPlaying(!isPlaying);
     }
-  }, []);
+  }, [isPlaying]);
 
   const seekTo = useCallback(async (ms: number) => {
     try {
       const sound = soundRef.current;
       if (!sound) return;
+      
+      // Optimistic UI update
+      setPositionMs(Math.max(0, ms));
+      
       await sound.setPositionAsync(Math.max(0, ms));
     } catch (error) {
       console.error('Error seeking:', error);
@@ -176,6 +219,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     () => ({ 
       isVisible, 
       isPlaying, 
+      isLoading,
       positionMs, 
       durationMs, 
       rate, 
@@ -189,7 +233,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       showFullPlayer,
       hideFullPlayer
     }),
-    [isVisible, isPlaying, positionMs, durationMs, rate, track, open, close, toggle, seekTo, skipBy, setRate, showFullPlayer, hideFullPlayer]
+    [isVisible, isPlaying, isLoading, positionMs, durationMs, rate, track, open, close, toggle, seekTo, skipBy, setRate, showFullPlayer, hideFullPlayer]
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
