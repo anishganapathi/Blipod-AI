@@ -133,7 +133,7 @@ export default function ProfilePage() {
         >
           <View style={styles.header}>
             <TouchableOpacity style={styles.headerButton}>
-              <MaterialIcons name="link" size={24} color="rgba(255, 255, 255, 0.8)" />
+              <MaterialIcons name="share" size={20} color="rgba(255, 255, 255, 0.8)" />
             </TouchableOpacity>
             
             <ThemedText style={styles.timeText}>6:46</ThemedText>
