@@ -142,7 +142,7 @@ const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
 export default function AudioPage(): React.JSX.Element {
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
