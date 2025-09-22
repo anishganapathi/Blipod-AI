@@ -163,7 +163,7 @@ const Homepage = ({ onNavigateToBrowse, onNavigateToAudio }: HomepageProps) => {
               <View style={styles.profileContainer}>
                 <View style={styles.profileImage}>
                   <Image
-                    source={require('../../assets/images/logo.png')}
+                    source={require('../../assets/images/Alogo.png')}
                     style={styles.profileLogo}
                     resizeMode="cover"
                   />
