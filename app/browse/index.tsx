@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../../components/themed-text";
 import { BlurView } from "expo-blur";
 import { useRoute, useFocusEffect } from '@react-navigation/native';
+import Icon from "../../components/LucideIcons";
 import Animated, {
   FadeInDown,
   FadeInRight,
@@ -171,7 +172,9 @@ export default function BrowsePage({ focusSearch = false }: { focusSearch?: bool
           <View style={styles.searchWrapper}>
             <BlurView intensity={30} tint="dark" style={styles.searchBlur}>
               <View style={styles.searchContent}>
-                <ThemedText style={styles.searchIcon}>🔍</ThemedText>
+                <View style={styles.searchIcon}>
+                  <Icon name="Search" size={18} color="rgba(255, 255, 255, 0.6)" />
+                </View>
                 <TextInput
                   ref={searchInputRef}
                   style={styles.searchInput}
@@ -267,8 +270,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   searchIcon: {
-    fontSize: 18,
     marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchInput: {
     flex: 1,

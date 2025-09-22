@@ -8,8 +8,6 @@ import { usePlayer } from '@/context/PlayerContext';
 import Animated, {
   FadeInRight,
   FadeOutLeft,
-  FadeIn,
-  FadeOut,
   ZoomIn,
   ZoomOut,
   useSharedValue,
@@ -51,8 +49,6 @@ export default function GlassNavBar(): React.JSX.Element {
   // FAB animation values
   const fabScale = useSharedValue(1);
   const fabOpacity = useSharedValue(1);
-  const fabRotation = useSharedValue(0);
-  const overlayOpacity = useSharedValue(0);
 
   // Mini Player animation values
   const miniPlayerScale = useSharedValue(1);
@@ -101,37 +97,23 @@ export default function GlassNavBar(): React.JSX.Element {
   }, [activeTab]);
 
   const handleFABPress = (): void => {
+    // Show dialog immediately - no delay
+    setIsDialogVisible(true);
+    
+    // Simple, fast animation that doesn't block the dialog
     fabScale.value = withSequence(
-      withSpring(0.85, { 
-        damping: 20,
-        stiffness: 400,
-        mass: 0.5 
+      withTiming(0.92, { 
+        duration: 80,
+        easing: Easing.out(Easing.quad)
       }),
-      withSpring(1.05, { 
-        damping: 15,
-        stiffness: 300,
-        mass: 0.7 
-      }),
-      withSpring(1, { 
-        damping: 20,
-        stiffness: 400 
+      withTiming(1, { 
+        duration: 120,
+        easing: Easing.out(Easing.quad)
       })
     );
-
-    fabRotation.value = withSequence(
-      withTiming(15, { duration: 150 }),
-      withTiming(0, { duration: 200 })
-    );
-
-    overlayOpacity.value = withTiming(1, { duration: 300 });
-    
-    setTimeout(() => {
-      setIsDialogVisible(true);
-    }, 100);
   };
 
   const handleDialogClose = (): void => {
-    overlayOpacity.value = withTiming(0, { duration: 200 });
     setIsDialogVisible(false);
     setLinkInput('');
   };
@@ -167,19 +149,8 @@ export default function GlassNavBar(): React.JSX.Element {
 
   const fabAnimatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { scale: fabScale.value },
-        { rotate: `${fabRotation.value}deg` }
-      ],
+      transform: [{ scale: fabScale.value }],
       opacity: fabOpacity.value,
-    };
-  });
-
-  const overlayAnimatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(overlayOpacity.value, [0, 1], [0.3, 1]);
-    return {
-      opacity: overlayOpacity.value,
-      transform: [{ scale }],
     };
   });
 
@@ -298,13 +269,6 @@ export default function GlassNavBar(): React.JSX.Element {
             </TouchableOpacity>
           </BlurView>
         </Animated.View>
-
-        <Animated.View 
-          style={[styles.fabRipple, overlayAnimatedStyle]}
-          pointerEvents="none"
-        >
-          <BlurView intensity={30} tint="light" style={styles.rippleBlur} />
-        </Animated.View>
       </View>
 
       {/* Glass bottom nav */}
@@ -342,30 +306,26 @@ export default function GlassNavBar(): React.JSX.Element {
         </BlurView>
       </View>
 
-      {/* Add Link Dialog */}
+      {/* Add Link Dialog - Instant Response */}
       <Modal
         visible={isDialogVisible}
         transparent
-        animationType="none"
+        animationType="fade"
         onRequestClose={handleDialogClose}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <Animated.View
-            entering={FadeIn.duration(400)}
-            exiting={FadeOut.duration(250)}
-            style={styles.modalOverlay}
-          >
+          <View style={styles.modalOverlay}>
             <TouchableOpacity
               style={styles.modalBackdrop}
               activeOpacity={1}
               onPress={handleDialogClose}
             >
               <Animated.View
-                entering={ZoomIn.springify().damping(25).stiffness(350).mass(0.8)}
-                exiting={ZoomOut.springify().damping(30).stiffness(400)}
+                entering={ZoomIn.duration(200)}
+                exiting={ZoomOut.duration(150)}
                 style={styles.dialogContainer}
               >
                 <BlurView
@@ -374,10 +334,7 @@ export default function GlassNavBar(): React.JSX.Element {
                   style={styles.dialogBlur}
                 >
                   <View style={styles.dialogContent}>
-                    <Animated.View 
-                      entering={FadeIn.delay(200).duration(400)}
-                      style={styles.dialogHeader}
-                    >
+                    <View style={styles.dialogHeader}>
                       <ThemedText style={styles.dialogTitle}>Add Link</ThemedText>
                       <TouchableOpacity
                         style={styles.closeButton}
@@ -386,12 +343,9 @@ export default function GlassNavBar(): React.JSX.Element {
                       >
                         <Icon name="X" size={20} color="rgba(255, 255, 255, 0.8)" />
                       </TouchableOpacity>
-                    </Animated.View>
+                    </View>
                     
-                    <Animated.View 
-                      entering={FadeIn.delay(300).duration(500)}
-                      style={styles.dialogBody}
-                    >
+                    <View style={styles.dialogBody}>
                       <ThemedText style={styles.dialogSubtitle}>
                         Enter an article or podcast link
                       </ThemedText>
@@ -410,10 +364,7 @@ export default function GlassNavBar(): React.JSX.Element {
                         />
                       </View>
                       
-                      <Animated.View 
-                        entering={FadeIn.delay(500).duration(400)}
-                        style={styles.buttonContainer}
-                      >
+                      <View style={styles.buttonContainer}>
                         <TouchableOpacity 
                           style={[styles.actionButton, styles.cancelButton]}
                           onPress={handleDialogClose}
@@ -438,13 +389,13 @@ export default function GlassNavBar(): React.JSX.Element {
                             <ThemedText style={styles.addButtonText}>Add</ThemedText>
                           </BlurView>
                         </TouchableOpacity>
-                      </Animated.View>
-                    </Animated.View>
+                      </View>
+                    </View>
                   </View>
                 </BlurView>
               </Animated.View>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -564,21 +515,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fabRipple: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    top: -12,
-    left: -12,
-    right: -12,
-    bottom: -12,
-  },
-  rippleBlur: {
-    flex: 1,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 165, 0, 0.1)',
   },
   container: {
     position: "absolute",
