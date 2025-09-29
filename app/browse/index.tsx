@@ -15,63 +15,65 @@ import Animated, {
   withSpring,
   interpolate,
 } from "react-native-reanimated";
+import { useStoryblokStory } from "@/src/storyblok-expo-sdk";
+
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 20px padding on sides + 20px gap
 
 const CATEGORIES = [
-  { 
-    id: "1", 
-    title: "Podcasts", 
+  {
+    id: "1",
+    title: "Podcasts",
     image: "https://picsum.photos/400/400?1",
     subtitle: "Latest episodes",
     color: "#FF6B6B"
   },
-  { 
-    id: "2", 
-    title: "Music", 
+  {
+    id: "2",
+    title: "Music",
     image: "https://picsum.photos/400/400?2",
     subtitle: "Trending tracks",
     color: "#4ECDC4"
   },
-  { 
-    id: "3", 
-    title: "News", 
+  {
+    id: "3",
+    title: "News",
     image: "https://picsum.photos/400/400?3",
     subtitle: "Stay informed",
     color: "#45B7D1"
   },
-  { 
-    id: "4", 
-    title: "Sports", 
+  {
+    id: "4",
+    title: "Sports",
     image: "https://picsum.photos/400/400?4",
     subtitle: "Game highlights",
     color: "#96CEB4"
   },
-  { 
-    id: "5", 
-    title: "Technology", 
+  {
+    id: "5",
+    title: "Technology",
     image: "https://picsum.photos/400/400?5",
     subtitle: "Tech updates",
     color: "#FECA57"
   },
-  { 
-    id: "6", 
-    title: "Lifestyle", 
+  {
+    id: "6",
+    title: "Lifestyle",
     image: "https://picsum.photos/400/400?6",
     subtitle: "Living better",
     color: "#FF9FF3"
   },
-  { 
-    id: "7", 
-    title: "Business", 
+  {
+    id: "7",
+    title: "Business",
     image: "https://picsum.photos/400/400?7",
     subtitle: "Market insights",
     color: "#54A0FF"
   },
-  { 
-    id: "8", 
-    title: "Health", 
+  {
+    id: "8",
+    title: "Health",
     image: "https://picsum.photos/400/400?8",
     subtitle: "Wellness tips",
     color: "#5F27CD"
@@ -108,16 +110,16 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ item, index }) => {
       onPressOut={handlePressOut}
     >
       <Image source={{ uri: item.image }} style={styles.image} />
-      
+
       {/* Glass overlay with gradient */}
       <View style={[styles.overlay, { backgroundColor: `${item.color}20` }]} />
-      
+
       <BlurView intensity={60} tint="dark" style={styles.glassOverlay}>
         <View style={styles.cardContent}>
           <ThemedText style={styles.cardTitle}>{item.title}</ThemedText>
           <ThemedText style={styles.cardSubtitle}>{item.subtitle}</ThemedText>
         </View>
-        
+
         {/* Accent line */}
         <View style={[styles.accentLine, { backgroundColor: item.color }]} />
       </BlurView>
@@ -132,7 +134,7 @@ export default function BrowsePage({ focusSearch = false }: { focusSearch?: bool
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    
+
     if (text.trim() === "") {
       setFilteredCategories(CATEGORIES);
     } else {
@@ -151,10 +153,18 @@ export default function BrowsePage({ focusSearch = false }: { focusSearch?: bool
       const timer = setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [focusSearch]);
+
+  const {
+    story,
+    isLoading,
+    error,
+    isInEditor,
+    renderContent
+  } = useStoryblokStory('browse');
 
   return (
     <View style={styles.container}>
@@ -191,31 +201,8 @@ export default function BrowsePage({ focusSearch = false }: { focusSearch?: bool
           </View>
         </View>
 
-        {/* Categories grid */}
-        <FlatList
-          data={filteredCategories}
-          numColumns={2}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <Animated.View
-              entering={FadeInUp.delay(index * 100).springify().damping(20).stiffness(300)}
-            >
-              <CategoryCard item={item} index={0} />
-            </Animated.View>
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.gridContainer}
-          columnWrapperStyle={filteredCategories.length > 1 ? styles.row : undefined}
-          ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <ThemedText style={styles.emptyText}>No categories found</ThemedText>
-              <ThemedText style={styles.emptySubtext}>
-                Try searching for something else
-              </ThemedText>
-            </View>
-          )}
-        />
+        {renderContent()}
+
       </SafeAreaView>
     </View>
   );

@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.AIAPP",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "384183779621-hasnghd0v1ghcbqikl3f5oln7c20jeat.apps.googleusercontent.com"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +26,13 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.AIAPP"
+      "package": "com.anonymous.AIAPP",
+      "config": {
+        "googleSignIn": {
+          "apiKey": "384183779621-gmgl7to8khpiuenov3vdqa24o945jnud.apps.googleusercontent.com",
+          "certificateHash": "91:47:37:E8:D1:A2:D9:D8:A4:8D:68:50:56:A6:94:8E:BE:92:FC:A3"
+        }
+      }
     },
     "web": {
       "output": "static",

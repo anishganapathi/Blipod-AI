@@ -16,15 +16,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 import GlassNavBar from '../../components/GlassNavBar';
+import { supabase } from '../../supabase';
+import type { User } from '@supabase/supabase-js';
+import { Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const STREAK_DAYS = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
-
 
 export default function ProfilePage() {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
   const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [userData, setUserData] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Animated.parallel([
@@ -46,6 +50,120 @@ export default function ProfilePage() {
     ]).start();
   }, []);
 
+  // Fixed function to get supabase user data
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+
+      // Method 1: Get user from session (recommended)
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error.message);
+        return;
+      }
+
+      if (session?.user) {
+        setUserData(session.user);
+        console.log('User data loaded:', session.user);
+      } else {
+        console.log('No user session found');
+      }
+
+      // Alternative Method 2: Get user directly
+      // const { data: { user }, error: userError } = await supabase.auth.getUser();
+      // if (userError) {
+      //   console.error('Error getting user:', userError.message);
+      //   return;
+      // }
+      // if (user) {
+      //   setUserData(user);
+      // }
+
+    } catch (err) {
+      console.error('Unexpected error fetching user data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setUserData(session.user);
+        } else {
+          setUserData(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const LogoutSection = () => {
+    const handleLogout = async () => {
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to log out?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Logout",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error("Logout error:", error.message);
+                } else {
+                  console.log("User logged out successfully");
+                  setUserData(null);
+                }
+              } catch (err) {
+                console.error("Unexpected logout error:", err);
+              }
+            }
+          }
+        ]
+      );
+    };
+
+    return (
+      <Animated.View
+        style={[
+          styles.menuContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <BlurView style={styles.menuBlur} intensity={20} tint="dark">
+          <TouchableOpacity style={styles.menuContent} onPress={handleLogout}>
+            <View style={styles.menuLeft}>
+              <View style={styles.menuIconContainer}>
+                <MaterialIcons name="logout" size={20} color="#FF4C4C" />
+              </View>
+              <ThemedText style={styles.menuText}>Logout</ThemedText>
+            </View>
+            <MaterialIcons
+              name="chevron-right"
+              size={24}
+              color="rgba(255, 255, 255, 0.6)"
+            />
+          </TouchableOpacity>
+        </BlurView>
+      </Animated.View>
+    );
+  };
+
+
   const ProfileIcon = () => (
     <Animated.View
       style={[
@@ -57,11 +175,21 @@ export default function ProfilePage() {
       ]}
     >
       <View style={styles.profileIcon}>
-        <Image
-          source={require('../../assets/images/logo.png')}
-          style={styles.logoImage}
-          resizeMode="contain"
-        />
+        {userData?.user_metadata?.picture || userData?.user_metadata?.avatar_url ? (
+          <Image
+            source={{
+              uri: userData.user_metadata.picture || userData.user_metadata.avatar_url
+            }}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        )}
       </View>
     </Animated.View>
   );
@@ -80,10 +208,12 @@ export default function ProfilePage() {
         <ThemedView style={styles.streakContent}>
           <View style={styles.streakHeader}>
             <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
-            <ThemedText style={styles.streakText}>0 day streak</ThemedText>
+            <ThemedText style={styles.streakText}>
+              {userData?.email || 'Loading...'}
+            </ThemedText>
             <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
           </View>
-          
+
           <View style={styles.daysContainer}>
             {STREAK_DAYS.map((day, index) => (
               <View key={day} style={styles.dayItem}>
@@ -179,14 +309,14 @@ export default function ProfilePage() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.mainContent}>
             <ProfileIcon />
-            
+
             <Animated.View
               style={{
                 opacity: fadeAnim,
@@ -194,17 +324,33 @@ export default function ProfilePage() {
               }}
             >
               <ThemedText style={styles.profileName}>
-                Anish's Blipod
+                {userData?.user_metadata?.full_name ||
+                  userData?.user_metadata?.name ||
+                  "User's Blipod"}
               </ThemedText>
             </Animated.View>
 
             <StreakWidget />
-            
+
             <View style={styles.menuSectionsContainer}>
               <ShareSection />
               <ArchiveSection />
               <MoreSection />
+              <LogoutSection />
             </View>
+
+            {/* Debug info (remove in production) */}
+            {/* {__DEV__ && userData && (
+              <View style={styles.debugContainer}>
+                <ThemedText style={styles.debugText}>
+                  Debug: {JSON.stringify({
+                    email: userData.email,
+                    name: userData.user_metadata?.full_name,
+                    picture: userData.user_metadata?.picture
+                  }, null, 2)}
+                </ThemedText>
+              </View>
+            )} */}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -281,6 +427,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 12,
+    overflow: 'hidden',
   },
   logoImage: {
     width: 100,
@@ -400,5 +547,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     color: '#fff',
+  },
+  debugContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    width: '100%',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#fff',
+    fontFamily: 'monospace',
   },
 });

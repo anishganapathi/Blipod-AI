@@ -1,9 +1,9 @@
 import React from "react";
-import { 
-  View, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +16,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import { useStoryblokStory } from "@/src/storyblok-expo-sdk";
 
 // Create animated component properly
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -147,6 +148,14 @@ const SingleRow: React.FC<{ item: SingleItem; index: number }> = ({ item }) => {
 
 // Main Page
 export default function AudioPage(): React.JSX.Element {
+  const {
+    story,
+    isLoading,
+    error,
+    isInEditor,
+    renderContent
+  } = useStoryblokStory('audio');
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
@@ -157,12 +166,7 @@ export default function AudioPage(): React.JSX.Element {
         >
           {/* Hero Section (no animation for bg image, but text + play button animate) */}
           <View style={styles.heroSection}>
-            <Image
-              source={{
-                uri: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=800&auto=format&fit=crop",
-              }}
-              style={styles.heroImage}
-            />
+            {renderContent()}
             <LinearGradient
               colors={["transparent", "rgba(0,0,0,0.8)", "#000"]}
               style={styles.heroGradient}
@@ -209,6 +213,7 @@ export default function AudioPage(): React.JSX.Element {
               ))}
             </View>
           </Animated.View>
+
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -244,9 +249,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  heroContent: { 
-    padding: 24, 
-    paddingBottom: 40, 
+  heroContent: {
+    padding: 24,
+    paddingBottom: 40,
     zIndex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -265,7 +270,7 @@ const styles = StyleSheet.create({
   playButton: {
     width: 56,
     height: 56,
-    borderRadius: 28, 
+    borderRadius: 28,
     backgroundColor: "#FFA500",
     justifyContent: "center",
     alignItems: "center",

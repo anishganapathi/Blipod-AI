@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePlayer } from '@/context/PlayerContext';
+import Grid from '@/components/storyblok/Grid';
+import { useStoryblokStory } from '@/src/storyblok-expo-sdk';
 interface PodcastCard {
   id: string;
   title: string;
@@ -34,6 +36,13 @@ interface HomepageProps {
 }
 
 const Homepage = ({ onNavigateToBrowse, onNavigateToAudio }: HomepageProps) => {
+  const {
+    story,
+    isLoading,
+    error,
+    isInEditor,
+    renderContent
+  } = useStoryblokStory('home');
   const { open } = usePlayer();
 
   const handleSearchPress = () => {
@@ -127,8 +136,8 @@ const Homepage = ({ onNavigateToBrowse, onNavigateToAudio }: HomepageProps) => {
   );
 
   const EpisodeItem = ({ item }: { item: Episode }) => (
-    <TouchableOpacity 
-      style={styles.episodeItem} 
+    <TouchableOpacity
+      style={styles.episodeItem}
       activeOpacity={0.8}
       onPress={() =>
         open({
@@ -174,43 +183,40 @@ const Homepage = ({ onNavigateToBrowse, onNavigateToAudio }: HomepageProps) => {
                 </View>
               </View>
             </View>
-            <TouchableOpacity 
-              style={styles.searchButton} 
+            <TouchableOpacity
+              style={styles.searchButton}
               onPress={handleSearchPress}
               activeOpacity={0.7}
             >
               <MaterialIcons name="search" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-
+          {renderContent()}
           {/* For you Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>For you</Text>
-              <TouchableOpacity onPress={handleForYouSeeAll}>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              data={podcasts}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <PodcastCard item={item} />}
-              contentContainerStyle={styles.podcastList}
-            />
-          </View>
+          {/* <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>For you</Text>
+                            <TouchableOpacity onPress={handleForYouSeeAll}>
+                                <Text style={styles.seeAllText}>See All</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <FlatList
+                            data={podcasts}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => <PodcastCard item={item} />}
+                            contentContainerStyle={styles.podcastList}
+                        />
+                    </View> */}
 
           {/* Recently saved Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recently Saved</Text>
-              <TouchableOpacity onPress={handleRecentlySavedSeeAll}>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
+
             </View>
-            
+
             <View style={styles.episodesList}>
               {episodes.map((episode) => (
                 <EpisodeItem key={episode.id} item={episode} />
