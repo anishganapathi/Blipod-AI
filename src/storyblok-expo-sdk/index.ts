@@ -2,6 +2,20 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode,
 import type { StoryblokConfig, StoryblokStory, StoryblokEvent, StoryblokContextType, StoryblokEventType } from './types';
 import React from 'react';
 
+// Try to import React Native components, fallback to web components
+let Text: any;
+let View: any;
+
+try {
+  const RN = require('react-native');
+  Text = RN.Text;
+  View = RN.View;
+} catch (e) {
+  // Fallback for web
+  Text = 'span';
+  View = 'div';
+}
+
 declare global {
   interface Window {
     StoryblokBridge: any;
@@ -37,15 +51,38 @@ export class StoryblokSDK {
   private cleanPathname: string = '';
   private urlCleanupInterval: ReturnType<typeof setInterval> | null = null;
   private components: Record<string, React.ComponentType<any>> = {};
+  private isWebEnvironment: boolean = false;
 
   constructor(config: StoryblokConfig, router?: any, components?: Record<string, React.ComponentType<any>>) {
     this.config = config;
     this.router = router;
     this.components = components || {};
-    this.isInEditor = typeof window !== 'undefined' && window.self !== window.top;
     
-    if (this.isInEditor) {
+    // Check if we're in a web environment
+    this.isWebEnvironment = typeof window !== 'undefined' && 
+                           typeof window.history !== 'undefined' && 
+                           typeof window.history.pushState === 'function';
+    
+    // Only check for editor mode in web environments
+    this.isInEditor = this.isWebEnvironment && window.self !== window.top;
+    
+    if (this.config.debug) {
+      console.log('[Storyblok SDK] Environment detected:', {
+        isWeb: this.isWebEnvironment,
+        isInEditor: this.isInEditor,
+        hasHistory: typeof window !== 'undefined' && typeof window.history !== 'undefined',
+        platform: typeof window !== 'undefined' ? 'web' : 'native'
+      });
+    }
+    
+    if (this.isInEditor && this.isWebEnvironment) {
       this.initializeExpoRouterIntegration();
+    } else if (this.config.debug) {
+      if (!this.isWebEnvironment) {
+        console.log('[Storyblok SDK] Native environment detected - skipping browser-specific features');
+      } else {
+        console.log('[Storyblok SDK] Not in editor mode - skipping editor integration');
+      }
     }
   }
 
@@ -53,24 +90,47 @@ export class StoryblokSDK {
   registerComponent(name: string, component: React.ComponentType<any>): void {
     this.components[name] = component;
     globalComponents[name] = component;
+    
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Registered component: ${name}`);
+    }
   }
 
   registerComponents(components: Record<string, React.ComponentType<any>>): void {
     Object.entries(components).forEach(([name, component]) => {
       this.registerComponent(name, component);
     });
+    
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Registered ${Object.keys(components).length} components:`, Object.keys(components));
+    }
   }
 
   getComponent(name: string): React.ComponentType<any> | null {
-    return this.components[name] || globalComponents[name] || null;
+    const component = this.components[name] || globalComponents[name] || null;
+    
+    if (!component && this.config.debug) {
+      console.warn(`[Storyblok SDK] Component "${name}" not found in registry`);
+    }
+    
+    return component;
   }
 
   // Render Storyblok content with registered components
   renderStoryblokContent(content: any, key?: string): React.ReactNode {
-    if (!content) return null;
+    if (!content) {
+      if (this.config.debug) {
+        console.log('[Storyblok SDK] No content to render');
+      }
+      return null;
+    }
 
     // If content is an array, render each item
     if (Array.isArray(content)) {
+      if (this.config.debug) {
+        console.log(`[Storyblok SDK] Rendering array content with ${content.length} items`);
+      }
+      
       return content.map((item, index) => 
         this.renderStoryblokContent(item, `${key || 'item'}-${index}`)
       );
@@ -88,6 +148,10 @@ export class StoryblokSDK {
           _editable: content._editable, // Pass editable info for visual editing
         };
 
+        if (this.config.debug) {
+          console.log(`[Storyblok SDK] Rendering component: ${content.component}`, { props: Object.keys(props) });
+        }
+
         return React.createElement(Component, props);
       } else {
         // Component not found, render a placeholder or warning
@@ -96,18 +160,20 @@ export class StoryblokSDK {
         }
         
         return React.createElement(
-          'div',
+          View,
           { 
             key: key || content._uid,
             style: { 
-              border: '2px dashed #ff6b6b', 
+              borderColor: '#ff6b6b',
+              borderWidth: 2,
+              borderStyle: 'dashed',
               padding: 16, 
               margin: 8,
               backgroundColor: '#fff5f5',
               borderRadius: 4
             }
           },
-          React.createElement('text', { style: { color: '#ff6b6b' } }, 
+          React.createElement(Text, { style: { color: '#ff6b6b' } }, 
             `Component "${content.component}" not found`
           )
         );
@@ -135,10 +201,22 @@ export class StoryblokSDK {
   }
 
   private initializeExpoRouterIntegration(): void {
-    if (typeof window === 'undefined') return;
+    if (!this.isWebEnvironment) {
+      if (this.config.debug) {
+        console.warn('[Storyblok SDK] Cannot initialize Expo router integration - not in web environment');
+      }
+      return;
+    }
 
     this.originalUrl = window.location.origin + window.location.pathname;
     this.cleanPathname = window.location.pathname;
+
+    if (this.config.debug) {
+      console.log('[Storyblok SDK] Initializing Expo router integration', {
+        originalUrl: this.originalUrl,
+        cleanPathname: this.cleanPathname
+      });
+    }
 
     this.cleanStoryblokParams();
     this.urlCleanupInterval = setInterval(() => {
@@ -149,7 +227,7 @@ export class StoryblokSDK {
   }
 
   private cleanStoryblokParams(): void {
-    if (typeof window === 'undefined') return;
+    if (!this.isWebEnvironment) return;
 
     const currentUrl = new URL(window.location.href);
     let hasStoryblokParams = false;
@@ -177,14 +255,28 @@ export class StoryblokSDK {
   }
 
   private setupHistoryInterception(): void {
-    if (typeof window === 'undefined') return;
+    if (!this.isWebEnvironment) {
+      if (this.config.debug) {
+        console.warn('[Storyblok SDK] Cannot setup history interception - not in web environment');
+      }
+      return;
+    }
 
     const originalPushState = window.history.pushState;
     const originalReplaceState = window.history.replaceState;
 
+    if (this.config.debug) {
+      console.log('[Storyblok SDK] Setting up history interception');
+    }
+
     window.history.pushState = (state: any, title: string, url?: string | URL) => {
       if (url && typeof url === 'string' && this.shouldInterceptUrl(url)) {
         const cleanUrl = this.removeStoryblokParamsFromUrl(url);
+        
+        if (this.config.debug) {
+          console.log('[Storyblok SDK] Intercepted pushState:', { original: url, clean: cleanUrl });
+        }
+        
         return originalPushState.call(window.history, state, title, cleanUrl);
       }
       return originalPushState.call(window.history, state, title, url);
@@ -193,6 +285,11 @@ export class StoryblokSDK {
     window.history.replaceState = (state: any, title: string, url?: string | URL) => {
       if (url && typeof url === 'string' && this.shouldInterceptUrl(url)) {
         const cleanUrl = this.removeStoryblokParamsFromUrl(url);
+        
+        if (this.config.debug) {
+          console.log('[Storyblok SDK] Intercepted replaceState:', { original: url, clean: cleanUrl });
+        }
+        
         return originalReplaceState.call(window.history, state, title, cleanUrl);
       }
       return originalReplaceState.call(window.history, state, title, url);
@@ -229,14 +326,25 @@ export class StoryblokSDK {
   async loadBridge(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
-        reject(new Error('Window object not available'));
+        const message = 'Window object not available - bridge loading skipped in native environment';
+        if (this.config.debug) {
+          console.warn(`[Storyblok SDK] ${message}`);
+        }
+        reject(new Error(message));
         return;
       }
 
       if (window.StoryblokBridge) {
+        if (this.config.debug) {
+          console.log('[Storyblok SDK] Bridge already loaded, initializing');
+        }
         this.initializeBridge();
         resolve(true);
         return;
+      }
+
+      if (this.config.debug) {
+        console.log('[Storyblok SDK] Loading Storyblok bridge script');
       }
 
       const script = document.createElement('script');
@@ -244,12 +352,19 @@ export class StoryblokSDK {
       script.async = true;
 
       script.onload = () => {
+        if (this.config.debug) {
+          console.log('[Storyblok SDK] Bridge script loaded successfully');
+        }
         this.initializeBridge();
         resolve(true);
       };
 
       script.onerror = () => {
-        reject(new Error('Failed to load Storyblok Bridge script'));
+        const message = 'Failed to load Storyblok Bridge script';
+        if (this.config.debug) {
+          console.error(`[Storyblok SDK] ${message}`);
+        }
+        reject(new Error(message));
       };
 
       document.head.appendChild(script);
@@ -259,6 +374,10 @@ export class StoryblokSDK {
   private initializeBridge(): void {
     if (!window.StoryblokBridge) {
       throw new Error('StoryblokBridge not available');
+    }
+
+    if (this.config.debug) {
+      console.log('[Storyblok SDK] Initializing bridge');
     }
 
     this.bridge = new window.StoryblokBridge();
@@ -273,7 +392,7 @@ export class StoryblokSDK {
 
     events.forEach(event => {
       this.bridge.on(event, (data: any) => {
-        if (this.isInEditor) {
+        if (this.isInEditor && this.isWebEnvironment) {
           setTimeout(() => this.cleanStoryblokParams(), 10);
         }
         
@@ -286,9 +405,16 @@ export class StoryblokSDK {
 
     this.bridge.on('viewLiveVersion', () => {
       if (this.router && this.cleanPathname) {
+        if (this.config.debug) {
+          console.log('[Storyblok SDK] Navigating to live version:', this.cleanPathname);
+        }
         this.router.replace(this.cleanPathname);
       }
     });
+
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Bridge initialized with ${events.length} event listeners`);
+    }
   }
 
   on(event: string, callback: Function): void {
@@ -296,6 +422,10 @@ export class StoryblokSDK {
       this.callbacks.set(event, []);
     }
     this.callbacks.get(event)!.push(callback);
+    
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Added event listener for: ${event}`);
+    }
   }
 
   off(event: string, callback: Function): void {
@@ -304,6 +434,9 @@ export class StoryblokSDK {
       const index = callbacks.indexOf(callback);
       if (index > -1) {
         callbacks.splice(index, 1);
+        if (this.config.debug) {
+          console.log(`[Storyblok SDK] Removed event listener for: ${event}`);
+        }
       }
     }
   }
@@ -316,15 +449,31 @@ export class StoryblokSDK {
   }
 
   async fetchStory(slug: string, version: 'draft' | 'published' = 'draft'): Promise<StoryblokStory> {
-    const response = await fetch(
-      `https://api${this.config.region === 'us' ? '-us' : ''}.storyblok.com/v2/cdn/stories/${slug}?token=${this.config.token}&version=${version}`
-    );
+    const apiUrl = `https://api${this.config.region === 'us' ? '-us' : ''}.storyblok.com/v2/cdn/stories/${slug}?token=${this.config.token}&version=${version}`;
+    
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Fetching story: ${slug} (${version})`);
+    }
+
+    const response = await fetch(apiUrl);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch story: ${response.statusText}`);
+      const errorMessage = `Failed to fetch story "${slug}": ${response.statusText}`;
+      if (this.config.debug) {
+        console.error(`[Storyblok SDK] ${errorMessage}`);
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
+    
+    if (this.config.debug) {
+      console.log(`[Storyblok SDK] Successfully fetched story: ${slug}`, {
+        contentType: data.story?.content?.component,
+        hasContent: !!data.story?.content
+      });
+    }
+    
     return data.story;
   }
 
@@ -333,6 +482,10 @@ export class StoryblokSDK {
   }
 
   destroy(): void {
+    if (this.config.debug) {
+      console.log('[Storyblok SDK] Destroying SDK instance');
+    }
+    
     this.callbacks.clear();
     
     if (this.urlCleanupInterval) {
@@ -352,7 +505,14 @@ export class StoryblokSDK {
   navigate(path: string, options?: any): void {
     if (this.router) {
       const cleanPath = this.removeStoryblokParamsFromUrl(path);
+      
+      if (this.config.debug) {
+        console.log('[Storyblok SDK] Navigating to:', { original: path, clean: cleanPath });
+      }
+      
       this.router.push(cleanPath, options);
+    } else if (this.config.debug) {
+      console.warn('[Storyblok SDK] Cannot navigate - no router provided');
     }
   }
 }
@@ -366,6 +526,15 @@ export function StoryblokProvider({
   components = {} 
 }: StoryblokProviderProps) {
   const [sdk] = useState(() => {
+    if (config.debug) {
+      console.log('[Storyblok SDK] Creating SDK instance with config:', {
+        token: config.token ? 'present' : 'missing',
+        region: config.region,
+        debug: config.debug,
+        componentsCount: Object.keys(components).length
+      });
+    }
+    
     const sdkInstance = new StoryblokSDK(config, router, components);
     // Register components globally
     sdkInstance.registerComponents(components);
@@ -385,17 +554,39 @@ export function StoryblokProvider({
       setIsLoading(true);
       setError(null);
 
+      if (config.debug) {
+        console.log(`[Storyblok SDK] Refreshing content for story: ${storySlug}`);
+      }
+
       const [draft, published] = await Promise.all([
-        sdk.fetchStory(storySlug, 'draft').catch(() => null),
-        sdk.fetchStory(storySlug, 'published').catch(() => null)
+        sdk.fetchStory(storySlug, 'draft').catch((err) => {
+          if (config.debug) {
+            console.warn(`[Storyblok SDK] Failed to fetch draft for ${storySlug}:`, err.message);
+          }
+          return null;
+        }),
+        sdk.fetchStory(storySlug, 'published').catch((err) => {
+          if (config.debug) {
+            console.warn(`[Storyblok SDK] Failed to fetch published for ${storySlug}:`, err.message);
+          }
+          return null;
+        })
       ]);
 
       setDraftContent(draft);
       setPublishedContent(published);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      
       if (config.debug) {
-        console.error('[Storyblok SDK] Error fetching content:', err);
+        console.log(`[Storyblok SDK] Content refreshed for ${storySlug}:`, {
+          hasDraft: !!draft,
+          hasPublished: !!published
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      if (config.debug) {
+        console.error('[Storyblok SDK] Error refreshing content:', errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -410,17 +601,27 @@ export function StoryblokProvider({
 
     const initializeSDK = async () => {
       try {
+        if (config.debug) {
+          console.log('[Storyblok SDK] Starting initialization');
+        }
+        
         await sdk.loadBridge();
         await refreshContent();
 
         sdk.on('input', (data: any) => {
           if (data && data.story) {
+            if (config.debug) {
+              console.log('[Storyblok SDK] Input event received, updating draft content');
+            }
             setDraftContent(data.story);
             setEventCount(prev => prev + 1);
           }
         });
 
         sdk.on('published', async () => {
+          if (config.debug) {
+            console.log('[Storyblok SDK] Published event received, refreshing content');
+          }
           setEventCount(prev => prev + 1);
           await refreshContent();
         });
@@ -439,10 +640,15 @@ export function StoryblokProvider({
           });
         });
 
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize SDK');
         if (config.debug) {
-          console.error('[Storyblok SDK] Initialization error:', err);
+          console.log('[Storyblok SDK] Initialization complete');
+        }
+
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize SDK';
+        setError(errorMessage);
+        if (config.debug) {
+          console.error('[Storyblok SDK] Initialization error:', errorMessage);
         }
       }
     };
@@ -450,6 +656,9 @@ export function StoryblokProvider({
     initializeSDK();
 
     return () => {
+      if (config.debug) {
+        console.log('[Storyblok SDK] Cleaning up provider');
+      }
       sdk.destroy();
     };
   }, [sdk, refreshContent, config.debug]);
@@ -486,6 +695,10 @@ export function useStoryblok(): StoryblokContextType {
 export function storyblokInit(options: StoryblokOptions) {
   const { config, components = {} } = options;
   
+  if (config.debug) {
+    console.log('[Storyblok SDK] Initializing with components:', Object.keys(components));
+  }
+  
   // Register components globally
   globalComponents = { ...globalComponents, ...components };
   
@@ -499,11 +712,17 @@ export function storyblokInit(options: StoryblokOptions) {
     // Register additional components
     registerComponent: (name: string, component: React.ComponentType<any>) => {
       globalComponents[name] = component;
+      if (config.debug) {
+        console.log(`[Storyblok SDK] Registered component globally: ${name}`);
+      }
     },
     
     // Register multiple components
     registerComponents: (newComponents: Record<string, React.ComponentType<any>>) => {
       Object.assign(globalComponents, newComponents);
+      if (config.debug) {
+        console.log(`[Storyblok SDK] Registered ${Object.keys(newComponents).length} components globally:`, Object.keys(newComponents));
+      }
     }
   };
 }
@@ -519,7 +738,7 @@ export function StoryblokEditable({ content, children }: StoryblokEditableProps)
     ? { dangerouslySetInnerHTML: { __html: content._editable } }
     : {};
 
-  return React.createElement('div', editableProps, children);
+  return React.createElement(View, editableProps, children);
 }
 
 // Hook for rendering Storyblok content
@@ -564,8 +783,9 @@ export function useStoryblokStory(slug: string) {
       setDraftContent(draft);
       setPublishedContent(published);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error(`[Storyblok SDK] Error fetching story "${slug}":`, err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error(`[Storyblok SDK] Error fetching story "${slug}":`, errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -621,7 +841,6 @@ export function useStoryblokStory(slug: string) {
   };
 }
 
-
 // Hook to get specific components from a story
 export function useStoryblokComponent(slug: string, componentType: string) {
   const { story } = useStoryblokStory(slug);
@@ -639,6 +858,5 @@ export function useStoryblokComponents(slug: string, componentType: string) {
   
   return components;
 }
-
 
 export { StoryblokConfig, StoryblokStory, StoryblokEvent, StoryblokEventType };

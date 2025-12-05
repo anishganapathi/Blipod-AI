@@ -1,16 +1,17 @@
 // app/account.tsx - Account Page
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { Link } from "expo-router";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useStoryblokStory } from "@/src/storyblok-expo-sdk";
+import { useRouter } from "expo-router";
 
 export default function AccountScreen() {
-  const { 
-    story, 
-    isLoading, 
-    error, 
-    isInEditor, 
-    renderContent 
-  } = useStoryblokStory('account'); 
+  const router = useRouter();
+  const {
+    story,
+    isLoading,
+    error,
+    isInEditor,
+    renderContent
+  } = useStoryblokStory('account');
 
   if (isLoading) {
     return (
@@ -28,9 +29,9 @@ export default function AccountScreen() {
         <View style={styles.fallbackContainer}>
           <Text style={styles.title}>Account Page</Text>
           <Text style={styles.subtitle}>Story not found. Using fallback content.</Text>
-          <Link href="/" style={styles.link}>
-            <Text style={styles.linkText}>← Back to Home</Text>
-          </Link>
+          <Pressable onPress={() => router.back()}>
+            <Text style={{ fontSize: 16 }}>← Back</Text>
+          </Pressable>
         </View>
       </View>
     );
@@ -40,12 +41,12 @@ export default function AccountScreen() {
     <ScrollView style={styles.container}>
       {/* This will render the 'account' story content */}
       {renderContent()}
-      
+
       {/* Navigation */}
       <View style={styles.navigationSection}>
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>← Back to Home</Text>
-        </Link>
+        <Pressable onPress={() => router.back()}>
+          <Text style={{ fontSize: 16 }}>← Back</Text>
+        </Pressable>
       </View>
 
       {/* Debug info */}

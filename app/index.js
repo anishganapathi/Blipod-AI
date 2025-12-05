@@ -2,12 +2,12 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useStoryblokStory } from '../src/storyblok-expo-sdk';
 
 export default function HomePage() {
-  const { 
-    story, 
-    isLoading, 
-    error, 
-    isInEditor, 
-    renderContent 
+  const {
+    story,
+    isLoading,
+    error,
+    isInEditor,
+    renderContent
   } = useStoryblokStory('home');
 
   if (isLoading) {
@@ -30,7 +30,7 @@ export default function HomePage() {
     <ScrollView style={styles.container}>
       {/* This will render the 'home' story content */}
       {renderContent()}
-      
+
       {/* Debug info */}
       {__DEV__ && (
         <View style={styles.debugSection}>
